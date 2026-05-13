@@ -217,16 +217,13 @@ function doSignup() {
   if (!first || !last || !email || !phone || !address || !pass || !confirm)
     return showAlert(al, 'error', 'Please fill in all required fields.');
 
-  // Email validation — must be a real format, reject invalid like 123@abc.com
   if (!isValidEmail(email))
     return showAlert(al, 'error', 'Please enter a valid email address (e.g. name@gmail.com). Numbers-only usernames are not accepted.');
 
-  // Phone validation — exactly 10 digits (after stripping), numbers only
   const cleanPhone = phone.replace(/\D/g, '');
   if (cleanPhone.length !== 10)
     return showAlert(al, 'error', 'Contact number must be exactly 10 digits (e.g. 9171234567).');
 
-  // Password rules
   if (!isValidPassword(pass))
     return showAlert(al, 'error', 'Password does not meet requirements. Must have uppercase, lowercase, number, and special character (?!@#$%^&*) — minimum 8 characters. Example: AbC93?!');
   if (pass !== confirm)
@@ -234,9 +231,19 @@ function doSignup() {
   if (!agreed)
     return showAlert(al, 'error', 'You must agree to the Terms & Conditions to continue.');
 
-  _otpPendingUser = { first, last, email, phone: '+63' + cleanPhone, address, barangay: 'Sta. Rita', pass, joinDate: new Date().toISOString() };
-  sendOtpCode(email);
+  // Register directly without OTP
+  const user = { first, last, email, phone: '+63' + cleanPhone, address, barangay: 'Sta. Rita', pass, joinDate: new Date().toISOString() };
+  reports       = [];
+  notifications = [];
+  nextReportId  = 1001;
+  sessionStorage.setItem('sb_user',   JSON.stringify(user));
+  sessionStorage.setItem('sb_nextId', nextReportId);
+
+  showLogin();
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPass').value  = '';
   hideAlert(al);
+  showAlert(document.getElementById('loginAlert'), 'success', '🎉 Account created! Enter your password to sign in.');
 }
 
 // ── EmailJS configuration ─────────────────
@@ -740,6 +747,10 @@ function submitReport() {
 
   if (!aiAnalysisDone) analyzeReport(true);
 
+  // Use pinned map coords if available
+  const lat = _pickerLat || window._pendingLat || null;
+  const lng = _pickerLng || window._pendingLng || null;
+
   const id  = nextReportId++;
   const now = new Date().toISOString();
   const r   = {
@@ -747,8 +758,8 @@ function submitReport() {
     severity: selectedSeverity,
     status: 'pending',
     date: now,
-    lat: window._pendingLat || null,
-    lng: window._pendingLng || null,
+    lat,
+    lng,
     residentEmail: currentUser?.email || 'resident',
     residentName:  currentUser ? `${currentUser.first} ${currentUser.last}` : 'Resident',
     timeline: [
@@ -992,10 +1003,31 @@ function submitFeedback() {
   const msg = document.getElementById('feedbackMsg').value.trim();
   const al  = document.getElementById('feedbackAlert');
   if (!msg) return showAlert(al, 'error', 'Please write your feedback before submitting.');
+
+  const categoryEl = document.querySelector('#page-feedback select');
+  const category = categoryEl ? categoryEl.value : 'General Feedback';
+  const residentName = currentUser ? `${currentUser.first} ${currentUser.last}` : 'Resident';
+  const now = new Date().toISOString();
+
+  // Notify Staff via shared notification channel
+  try {
+    const STAFF_FEEDBACK_KEY = 'sb_notifs';
+    const staffNotifs = JSON.parse(localStorage.getItem(STAFF_FEEDBACK_KEY) || '[]');
+    staffNotifs.unshift({
+      id: Date.now(),
+      icon: '💬',
+      text: `💬 Feedback from ${residentName} [${category}]: "${msg.slice(0, 80)}${msg.length > 80 ? '…' : ''}"`,
+      date: now,
+      read: false,
+      fromResident: true,
+    });
+    localStorage.setItem(STAFF_FEEDBACK_KEY, JSON.stringify(staffNotifs));
+  } catch(e) {}
+
   showAlert(al, 'success', '✅ Thank you! Your feedback has been submitted to the barangay.');
   document.getElementById('feedbackMsg').value = '';
   document.querySelectorAll('.stars i').forEach(s => s.classList.remove('lit'));
-  showToast('Feedback submitted successfully!');
+  showToast('Feedback submitted! Barangay staff has been notified.');
   setTimeout(() => hideAlert(al), 4000);
 }
 
@@ -1070,8 +1102,8 @@ document.addEventListener('click', e => {
 ═══════════════════════════════════════════════════════════ */
 
 // Sta. Rita, Olongapo City center coordinates
-const STARITA_LAT = 14.8445;
-const STARITA_LNG = 120.2842;
+const STARITA_LAT = 14.8390;
+const STARITA_LNG = 120.2840;
 
 let _liveMap       = null;
 let _liveMarkers   = [];
@@ -1328,19 +1360,4 @@ function getGPS() {
   }, { enableHighAccuracy: true, timeout: 8000 });
 }
 
-// Store lat/lng with submitted report
-const _origSubmitReport = submitReport;
-function submitReport() {
-  // Inject pinned coords before calling original submit
-  if (_pickerLat && _pickerLng) {
-    window._pendingLat = _pickerLat;
-    window._pendingLng = _pickerLng;
-  }
-  _origSubmitReport();
-}
-
-// Patch reports to include lat/lng when coords are available
-const _origSubmitReportInternal = window.submitReport;
-
-// Override the reports push to include coords
-const __realSubmit = submitReport;
+// GPS coords are stored in window._pendingLat / _pendingLng via getGPS() above

@@ -95,14 +95,13 @@ function switchPanel(name) {
   if (panel) panel.classList.add('active');
   const link = document.querySelector(`.sb-link[onclick="switchPanel('${name}')"]`);
   if (link) link.classList.add('active');
-  const titles = { dash:'Dashboard', incidents:'Incident Management', residents:'Resident Management', notifications:'Notifications', settings:'Settings', analytics:'Analytics', announcements:'Announcements', officials:'Officials Directory', activitylog:'Activity Log', livemap:'Live Incident Map' };
+  const titles = { dash:'Dashboard', incidents:'Incident Management', notifications:'Notifications', settings:'Settings', analytics:'Analytics', announcements:'Announcements', officials:'Officials Directory', activitylog:'Activity Log', livemap:'Live Incident Map' };
   const bc = document.getElementById('dash-breadcrumb');
   if (bc) bc.textContent = titles[name] || name;
   if (window.innerWidth <= 800) document.getElementById('sidebar')?.classList.remove('open');
 
   if (name === 'dash')          { updateDashKPIs(); renderDashNotifs(); renderTodaysTasks(); renderMonthlyChart(); }
   if (name === 'incidents')     renderIncidentsTable();
-  if (name === 'residents')     renderResidentsTable();
   if (name === 'notifications') renderNotificationsPanel();
   if (name === 'analytics')     renderAnalytics();
   if (name === 'announcements') renderAnnouncements();
@@ -1069,7 +1068,7 @@ function doLogin() {
     if (setEmail && account) setEmail.value = account.email;
 
     showScreen('dashboard-screen');
-    switchPanel('residents');
+    switchPanel('incidents');
     startClock();
     toast(`Welcome back, ${name}!`, 'success');
 
@@ -1084,7 +1083,6 @@ function doLogin() {
 function doRegister() {
   const fname   = document.getElementById('reg-fname').value.trim();
   const lname   = document.getElementById('reg-lname').value.trim();
-  const empId   = document.getElementById('reg-empid').value.trim();
   const email   = document.getElementById('reg-email').value.trim();
   const role    = document.getElementById('reg-role').value;
   const contact = document.getElementById('reg-contact').value.trim();
@@ -1103,25 +1101,26 @@ function doRegister() {
   if (!tnc?.checked)    { toast('You must accept the Terms & Conditions.', 'error'); return; }
   if (!confirm?.checked){ toast('Please confirm your information is accurate.', 'error'); return; }
 
+  // Validate contact — numbers only
+  const cleanContact = contact.replace(/\D/g, '');
+  if (contact && cleanContact.length !== 10) { toast('Contact number must be exactly 10 digits.', 'error'); return; }
+
   const accounts = getAccounts();
   if (accounts.find(a => a.email === email)) { toast('An account with this email already exists.', 'error'); return; }
 
-  // Store pending registration data and send OTP
-  state.pendingRegData = { fname, lname, empId, email, role, contact, pass };
-  const otp = generateOTP();
-  state.pendingOTP = otp;
+  // Register directly without OTP
+  const newAccount = { id: Date.now(), firstName: fname, lastName: lname, email, role, contact: cleanContact ? '+63' + cleanContact : '', password: pass, registeredAt: new Date().toISOString() };
+  accounts.push(newAccount);
+  saveAccounts(accounts);
 
-  toast(`📧 Sending verification code to ${email}...`, 'success');
-  sendOTPEmail(email, otp, fname).then(() => {
-    showOTPModal(email, completeRegistration);
-    // Dev hint
-    const hint = document.createElement('div');
-    hint.id = 'otp-dev-hint';
-    hint.style.cssText = 'position:fixed;bottom:80px;left:30px;background:#0a1020;border:1px solid #1565C0;padding:8px 14px;border-radius:6px;font-family:monospace;font-size:.75rem;color:#42A5F5;z-index:99999;opacity:.9';
-    hint.textContent = `[DEV] OTP Code: ${otp}`;
-    document.body.appendChild(hint);
-    setTimeout(() => hint?.remove(), 60000);
-  });
+  addNotif('🔑', `New staff account registered: ${fname} ${lname} (${role})`);
+  logActivity('🔑', 'Staff registered', `${fname} ${lname} (${role}) self-registered`);
+
+  toast(`✅ Account created for ${fname} ${lname}! You may now log in.`, 'success');
+  setTimeout(() => {
+    document.getElementById('login-email').value = email;
+    showScreen('login-screen');
+  }, 1800);
 }
 
 function completeRegistration() {
@@ -1438,6 +1437,22 @@ function submitAnnouncement(editId) {
     items.unshift({ id: Date.now(), title, body, priority, expiry, author: state.currentUser || 'Barangay Staff', date: new Date().toISOString() });
   }
   saveAnnouncements(items);
+
+  // Notify residents via shared notification channel
+  const resNotifs = getResidentNotifs();
+  const priorityLabels = { urgent: '🚨 URGENT', important: '⚠️ IMPORTANT', info: 'ℹ️ INFO', general: '📌' };
+  const prioLabel = priorityLabels[priority] || '📌';
+  resNotifs.push({
+    icon: 'fa-bullhorn',
+    color: 'blue-icon',
+    text: `📢 ${prioLabel} Barangay Announcement: "${title}" — ${body.slice(0, 80)}${body.length > 80 ? '…' : ''}`,
+    date: new Date().toISOString(),
+    read: false,
+    fromStaff: true,
+    isAnnouncement: true,
+  });
+  saveResidentNotifs(resNotifs);
+
   addNotif('📢', `Announcement posted: "${title}"`);
   logActivity('📢', editId && editId !== 'null' ? 'Announcement updated' : 'Announcement posted', `"${title}" — Priority: ${priority} (by ${state.currentUser||'Staff'})`);
   document.getElementById('add-announce-modal')?.remove();
@@ -1461,14 +1476,16 @@ function deleteAnnouncement(id) {
 /* ═══════════════════════════════════════════════════════════
    LIVE MAP
 ═══════════════════════════════════════════════════════════ */
-// Approximate purok coordinates within Barangay Starita, Olongapo City
+// Approximate purok coordinates within Barangay Starita (Sta. Rita), Olongapo City
+const STARITA_CENTER_LAT = 14.8390;
+const STARITA_CENTER_LNG = 120.2840;
 const PUROK_COORDS = {
-  'Purok 1': { lat: 14.838, lng: 120.279, ox: 18, oy: 30 },
-  'Purok 2': { lat: 14.836, lng: 120.282, ox: 35, oy: 45 },
-  'Purok 3': { lat: 14.834, lng: 120.285, ox: 52, oy: 58 },
-  'Purok 4': { lat: 14.840, lng: 120.275, ox: 20, oy: 55 },
-  'Purok 5': { lat: 14.842, lng: 120.280, ox: 42, oy: 25 },
-  'Purok 6': { lat: 14.831, lng: 120.277, ox: 65, oy: 70 },
+  'Purok 1': { lat: 14.8410, lng: 120.2820, ox: 20, oy: 28 },
+  'Purok 2': { lat: 14.8400, lng: 120.2840, ox: 35, oy: 38 },
+  'Purok 3': { lat: 14.8385, lng: 120.2855, ox: 52, oy: 50 },
+  'Purok 4': { lat: 14.8375, lng: 120.2830, ox: 38, oy: 62 },
+  'Purok 5': { lat: 14.8395, lng: 120.2865, ox: 62, oy: 32 },
+  'Purok 6': { lat: 14.8365, lng: 120.2845, ox: 48, oy: 72 },
 };
 
 function getPurokFromLocation(loc) {

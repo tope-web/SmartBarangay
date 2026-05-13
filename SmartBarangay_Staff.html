@@ -165,11 +165,7 @@
             <div class="input-wrap"><span class="inp-icon">👤</span><input type="text" placeholder="Dela Cruz" id="reg-lname"/></div>
           </div>
           <div class="input-group">
-            <label>Employee ID</label>
-            <div class="input-wrap"><span class="inp-icon">🪪</span><input type="text" placeholder="STA-2024-XXXX" id="reg-empid"/></div>
-          </div>
-          <div class="input-group">
-            <label>Personal Email <span style="font-size:.65rem;color:#42A5F5;font-family:var(--font-mono)">(OTP will be sent here)</span></label>
+            <label>Personal Email</label>
             <div class="input-wrap">
               <span class="inp-icon">📧</span>
               <input type="email" placeholder="e.g. juandelacruz@gmail.com" id="reg-email"/>
@@ -195,7 +191,8 @@
           </div>
           <div class="input-group">
             <label>Contact Number</label>
-            <div class="input-wrap"><span class="inp-icon">📱</span><input type="tel" placeholder="+63 9XX XXX XXXX" id="reg-contact"/></div>
+            <div class="input-wrap"><span class="inp-icon">📱</span><input type="tel" placeholder="9XXXXXXXXX" id="reg-contact" maxlength="10" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'')" onkeydown="if(!/[0-9]/.test(event.key)&&!['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(event.key))event.preventDefault()"/></div>
+            <div style="font-size:.68rem;color:var(--text-dim);font-family:var(--font-mono);padding:3px 4px">Numbers only — 10 digits (e.g. 9171234567)</div>
           </div>
           <div class="input-group">
             <label>Password</label>
@@ -204,15 +201,6 @@
           <div class="input-group">
             <label>Confirm Password</label>
             <div class="input-wrap"><span class="inp-icon">🔒</span><input type="password" placeholder="Repeat password" id="reg-pass2"/></div>
-          </div>
-        </div>
-
-        <!-- OTP Notice Banner -->
-        <div style="background:rgba(30,136,229,0.08);border:1px solid rgba(30,136,229,0.2);border-radius:8px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:4px">
-          <span style="font-size:1.2rem;flex-shrink:0">📧</span>
-          <div>
-            <div style="font-family:var(--font-mono);font-size:.72rem;color:#42A5F5;margin-bottom:3px">EMAIL VERIFICATION REQUIRED</div>
-            <div style="font-size:.78rem;color:var(--text-sec);line-height:1.5">After submitting, a 6-digit OTP code will be sent to your personal email. You must verify it to complete registration. Use your real email address (Gmail, Yahoo, Outlook, etc.)</div>
           </div>
         </div>
 
@@ -238,11 +226,11 @@
 
         <div class="form-actions">
           <button class="btn-ghost" onclick="showScreen('login-screen')">← Already have an account</button>
-          <button class="btn-primary" onclick="doRegister()"><span class="btn-icon">📧</span> Send Verification Code</button>
+          <button class="btn-primary" onclick="doRegister()"><span class="btn-icon">📋</span> Create Staff Account</button>
         </div>
         <button class="btn-back" onclick="showScreen('landing-screen')">← Back to Home</button>
       </div>
-      <div class="auth-security"><span class="sec-dot"></span> 256-bit AES Encrypted · OTP Verified · Data Privacy Act Compliant</div>
+      <div class="auth-security"><span class="sec-dot"></span> 256-bit AES Encrypted · Data Privacy Act Compliant</div>
     </div>
   </div>
   <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
@@ -273,7 +261,6 @@
       <div class="sb-section">MAIN</div>
       <a class="sb-link active" onclick="switchPanel('dash')"><span>📊</span> Dashboard</a>
       <a class="sb-link" onclick="switchPanel('incidents')"><span>🚨</span> Incidents</a>
-      <a class="sb-link" onclick="switchPanel('residents')"><span>👥</span> Residents</a>
       <div class="sb-section">MANAGEMENT</div>
       <a class="sb-link" onclick="switchPanel('livemap')"><span>🗺️</span> Live Map</a>
       <a class="sb-link" onclick="switchPanel('analytics')"><span>📊</span> Analytics</a>
@@ -475,7 +462,7 @@
           <div id="livemap-frame-wrap" style="position:relative;width:100%;height:100%;">
             <iframe
               id="osm-map"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=120.2680%2C14.8220%2C120.2980%2C14.8520&layer=mapnik&marker=14.8370%2C120.2830"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=120.2730%2C14.8300%2C120.2950%2C14.8480&layer=mapnik&marker=14.8390%2C120.2840"
               style="width:100%;height:100%;border:none;border-radius:8px;"
               title="Barangay Starita Map"
               loading="lazy"
