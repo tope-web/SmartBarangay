@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SmartBarangay | Sta. Rita, Olongapo City</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #1b5e20;
+            --primary-green-light: #2e7d32;
+            --primary-green-bright: #388e3c;
+            --gold: #f9a825;
+            --gold-dark: #f57f17;
+            --sky-blue: #0288d1;
+            --white: #ffffff;
+            --off-white: #f5fbf5;
+            --text-dark: #1a2e1a;
+            --text-muted: #4a6a4a;
+            --text-light: #7a9a7a;
+            --red: #c62828;
+            --orange: #f57f17;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        body.dark {
+            --primary-green: #2e7d32;
+            --primary-green-light: #1b5e20;
+            --off-white: #1a2e1a;
+            --white: #2a3e2a;
+            --text-dark: #e8f5e9;
+            --text-muted: #b9dbb9;
+            --bg-gradient: linear-gradient(135deg, #0a2a0a 0%, #0a3a0a 100%);
+            background: #0a2a0a;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e9 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Fixed Background Image */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmPmAlRhJA5twVtq6FSeMoiWwt6vn0RFaLig&s');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.08;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(27, 94, 32, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-radius: 30px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--gold);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-seal {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 20px rgba(249, 168, 37, 0.3);
+        }
+
+        .logo-text h1 {
+            font-size: 1.4rem;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .logo-text p {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .header-badge {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            background: var(--gold);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .hero h2 {
+            font-size: 2.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-green), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .qr-section {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            padding: 40px 20px;
+        }
+
+        .qr-card {
+            background: var(--white);
+            border-radius: 32px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            width: 320px;
+            border-top: 5px solid var(--primary-green);
+        }
+
+        .qr-card.staff {
+            border-top-color: var(--gold);
+        }
+
+        .qr-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .qr-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .qr-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .qr-card p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        canvas.qr-code {
+            width: 160px;
+            height: 160px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn-access {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+            color: white;
+            text-decoration: none;
+            padding: 12px 32px;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-access.staff {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+        }
+
+        .btn-access:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin: 60px 0;
+        }
+
+        .feature-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+            border: 1px solid rgba(46, 125, 50, 0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--gold);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--primary-green);
+        }
+
+        .footer {
+            background: var(--primary-green);
+            color: white;
+            text-align: center;
+            padding: 24px;
+            border-radius: 20px;
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-content .close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #ddd;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-light));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: transform 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary-green);
+            color: var(--primary-green);
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .error-msg {
+            color: var(--red);
+            font-size: 0.8rem;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .success-msg {
+            color: var(--primary-green);
+            font-size: 0.8rem;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .personnel-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .personnel-card {
+            background: var(--off-white);
+            padding: 15px;
+            border-radius: 16px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background: #fff3e0;
+            color: var(--orange);
+        }
+
+        .status-badge.in-progress {
+            background: #e3f2fd;
+            color: var(--sky-blue);
+        }
+
+        .status-badge.resolved {
+            background: #e8f5e9;
+            color: var(--primary-green);
+        }
+
+        .report-item {
+            border: 1px solid #ddd;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .map-container {
+            height: 400px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+            .qr-section {
+                gap: 30px;
+            }
+            .qr-card {
+                width: 280px;
+            }
+            .header {
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmPmAlRhJA5twVtq6FSeMoiWwt6vn0RFaLig&s" alt="Barangay Seal" class="logo-seal">
+                <div class="logo-text">
+                    <h1>SmartBarangay</h1>
+                    <p>Sta. Rita · Olongapo City</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="header-badge">
+                    <span>🇵🇭 Republic of the Philippines</span>
+                </div>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i> Toggle Theme
+                </button>
+            </div>
+        </header>
+
+        <div class="hero">
+            <h2>Welcome to SmartBarangay</h2>
+            <p>Your digital gateway to Barangay Sta. Rita services — report incidents, track updates, and connect with your community.</p>
+        </div>
+
+        <div class="qr-section">
+            <div class="qr-card">
+                <div class="qr-icon">🏠</div>
+                <h3>Resident Portal</h3>
+                <p>Submit incident reports, track status, receive notifications</p>
+                <div class="qr-container">
+                    <div id="resident-qr"></div>
+                </div>
+                <a class="btn-access" href="Resident.html">Access Resident Portal →</a>
+            </div>
+
+            <div class="qr-card staff">
+                <div class="qr-icon">👔</div>
+                <h3>Staff Portal</h3>
+                <p>Manage incidents, residents, and barangay operations</p>
+                <div class="qr-container">
+                    <div id="staff-qr"></div>
+                </div>
+                <a class="btn-access staff" href="SmartBarangay_Staff.html">Access Staff Portal →</a>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h4>AI-Powered Reporting</h4>
+                <p>Smart classification and prioritization of incidents</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h4>Live Incident Map</h4>
+                <p>Real-time visualization of reports across the barangay</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h4>Instant Notifications</h4>
+                <p>Get real-time updates on your report status</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h4>Analytics Dashboard</h4>
+                <p>Data-driven insights for better governance</p>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>© 2026 Barangay Sta. Rita, Olongapo City — All Rights Reserved</p>
+            <p style="margin-top: 8px; font-size: 0.7rem;">
+                <a href="#" onclick="showTerms('general')">Privacy Policy</a> | 
+                <a href="#" onclick="showTerms('general')">Data Privacy Act (RA 10173)</a> | 
+                <a href="#" onclick="showTerms('general')">Contact: starita.brgy@olongapo.gov.ph</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Resident Modal -->
+    <div id="residentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeResidentModal()">&times;</span>
+            <div id="residentAuthPanel">
+                <h3>Resident Access</h3>
+                <div id="loginView">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="resident@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPass" placeholder="Enter your password">
+                    </div>
+                    <button class="btn-primary" onclick="residentLogin()">Sign In</button>
+                    <button class="btn-outline" onclick="showSignup()">Create New Account</button>
+                    <div id="loginError" class="error-msg"></div>
+                </div>
+                <div id="signupView" style="display: none;">
+                    <h3>Create Resident Account</h3>
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="regFirst" placeholder="First Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="regLast" placeholder="Last Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="regEmail" placeholder="Valid email address">
+                        <small style="color: var(--text-muted);">Note: 123@abc.com will be rejected</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Number</label>
+                        <input type="tel" id="regPhone" placeholder="09123456789" maxlength="11">
+                        <small style="color: var(--text-muted);">Exactly 11 digits, numbers only</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Home Address</label>
+                        <input type="text" id="regAddress" placeholder="Must be within Sta. Rita">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPass" placeholder="AbC93?!">
+                        <small style="color: var(--text-muted);">Must have uppercase, lowercase, number, special character</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="regConfirm" placeholder="Confirm password">
+                    </div>
+                    <button class="btn-primary" onclick="residentSignup()">Create Account</button>
+                    <button class="btn-outline" onclick="showLogin()">Back to Login</button>
+                    <div id="signupError" class="error-msg"></div>
+                </div>
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="#" onclick="showTerms('resident')">📜 Resident Terms & Conditions</a>
+                </div>
+            </div>
+            <div id="residentAppPanel" style="display: none;">
+                <h3>Resident Dashboard</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="btn-access" onclick="showResidentPage('dashboard')">Dashboard</button>
+                    <button class="btn-access" onclick="showResidentPage('report')">Report Incident</button>
+                    <button class="btn-access" onclick="showResidentPage('map')">Live Map</button>
+                    <button class="btn-access" onclick="showResidentPage('reports')">My Reports</button>
+                    <button class="btn-access" onclick="showResidentPage('about')">About Us</button>
+                    <button class="btn-access" onclick="residentLogout()">Logout</button>
+                </div>
+                <div id="residentContent" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Modal -->
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeStaffModal()">&times;</span>
+            <div id="staffAuthPanel">
+                <h3>Staff Authentication</h3>
+                <div class="form-group">
+                    <label>Employee ID / Email</label>
+                    <input type="email" id="staffEmail" placeholder="admin@barangay.gov.ph">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="staffPass" placeholder="Password">
+                </div>
+                <button class="btn-primary" onclick="staffLogin()">Authenticate</button>
+                <div id="staffError" class="error-msg"></div>
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="#" onclick="showTerms('staff')">📜 Staff Terms & Conditions</a>
+                </div>
+            </div>
+            <div id="staffAppPanel" style="display: none;">
+                <h3>Staff Dashboard - Barangay Sta. Rita</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <button class="btn-access" onclick="showStaffPage('incidents')">Manage Incidents</button>
+                    <button class="btn-access" onclick="showStaffPage('map')">Live Map</button>
+                    <button class="btn-access" onclick="showStaffPage('residents')">Residents List</button>
+                    <button class="btn-access" onclick="showStaffPage('analytics')">Analytics</button>
+                    <button class="btn-access" onclick="showStaffPage('personnel')">Personnel</button>
+                    <button class="btn-access staff" onclick="staffLogout()">Logout</button>
+                </div>
+                <div id="staffContent" style="max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // QR Code Generation
+        const baseUrl = window.location.origin;
+        new QRCode(document.getElementById("resident-qr"), {
+            text: baseUrl + "#resident",
+            width: 160,
+            height: 160,
+            colorDark: "#1b5e20",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        new QRCode(document.getElementById("staff-qr"), {
+            text: baseUrl + "#staff",
+            width: 160,
+            height: 160,
+            colorDark: "#f9a825",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Dark Mode Toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+
+        // Data Storage
+        let residents = JSON.parse(localStorage.getItem('barangay_residents') || '[]');
+        let reports = JSON.parse(localStorage.getItem('barangay_reports') || '[]');
+        let currentResident = null;
+        let currentStaff = null;
+        let otpTimeout = null;
+
+        // Validation Functions
+        function isValidEmail(email) {
+            const basic = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!basic.test(email)) return false;
+            if (email === '123@abc.com') return false;
+            return true;
+        }
+
+        function isValidPhone(phone) {
+            return /^\d{11}$/.test(phone);
+        }
+
+        function isValidPassword(pass) {
+            return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*?])[A-Za-z\d!@#$%^&*?]{6,}$/.test(pass);
+        }
+
+        // Resident Functions
+        function residentSignup() {
+            const first = document.getElementById('regFirst').value.trim();
+            const last = document.getElementById('regLast').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const address = document.getElementById('regAddress').value.trim();
+            const pass = document.getElementById('regPass').value;
+            const confirm = document.getElementById('regConfirm').value;
+            const errorDiv = document.getElementById('signupError');
+
+            if (!first || !last || !email || !phone || !address || !pass) {
+                errorDiv.innerText = 'All fields are required';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!isValidEmail(email)) {
+                errorDiv.innerText = 'Invalid email format (123@abc.com is rejected)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!isValidPhone(phone)) {
+                errorDiv.innerText = 'Contact number must be exactly 11 digits (numbers only)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!address.toLowerCase().includes('sta. rita') && !address.toLowerCase().includes('starita')) {
+                errorDiv.innerText = 'Address must be within Barangay Sta. Rita';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (!isValidPassword(pass)) {
+                errorDiv.innerText = 'Password must contain uppercase, lowercase, number, and special character (e.g., AbC93?!)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (pass !== confirm) {
+                errorDiv.innerText = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (residents.find(r => r.email === email)) {
+                errorDiv.innerText = 'Email already registered';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const newResident = {
+                id: Date.now(),
+                first,
+                last,
+                email,
+                phone,
+                address,
+                password: pass,
+                joinDate: new Date().toISOString()
+            };
+            residents.push(newResident);
+            localStorage.setItem('barangay_residents', JSON.stringify(residents));
+            alert('Account created successfully! Please login.');
+            showLogin();
+        }
+
+        function residentLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const user = residents.find(r => r.email === email && r.password === pass);
+            const errorDiv = document.getElementById('loginError');
+
+            if (user) {
+                currentResident = user;
+                launchResidentApp();
+            } else {
+                errorDiv.innerText = 'Invalid email or password';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function launchResidentApp() {
+            document.getElementById('residentAuthPanel').style.display = 'none';
+            document.getElementById('residentAppPanel').style.display = 'block';
+            showResidentPage('dashboard');
+        }
+
+        function showResidentPage(page) {
+            const content = document.getElementById('residentContent');
+            if (page === 'dashboard') {
+                const myReports = reports.filter(r => r.residentEmail === currentResident.email);
+                content.innerHTML = `
+                    <h4>Welcome, ${currentResident.first} ${currentResident.last}! 👋</h4>
+                    <div style="background: var(--off-white); padding: 20px; border-radius: 16px; margin-top: 20px;">
+                        <p><strong>Total Reports:</strong> ${myReports.length}</p>
+                        <p><strong>Pending:</strong> ${myReports.filter(r => r.status === 'Pending').length}</p>
+                        <p><strong>Resolved:</strong> ${myReports.filter(r => r.status === 'Resolved').length}</p>
+                    </div>
+                    <button class="btn-primary" style="margin-top: 20px;" onclick="showResidentPage('report')">+ New Report</button>
+                `;
+            } else if (page === 'report') {
+                content.innerHTML = `
+                    <h4>Report an Incident</h4>
+                    <div class="form-group"><label>Incident Type</label><select id="repType"><option>Select Type</option><option>Public Safety</option><option>Infrastructure</option><option>Flood/Drainage</option><option>Health/Sanitation</option><option>Other</option></select></div>
+                    <div class="form-group"><label>Location (Sta. Rita)</label><input type="text" id="repLoc" placeholder="Street, Purok"></div>
+                    <div class="form-group"><label>Description</label><textarea id="repDesc" rows="4" placeholder="Describe the incident..."></textarea></div>
+                    <div class="form-group"><label>Severity</label><select id="repSev"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+                    <button class="btn-primary" onclick="submitReport()">Submit Report</button>
+                    <div id="repMsg" class="error-msg"></div>
+                `;
+            } else if (page === 'map') {
+                content.innerHTML = `<div id="residentMap" class="map-container"></div>`;
+                setTimeout(() => {
+                    const map = L.map('residentMap').setView([14.8445, 120.2842], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    reports.forEach(r => {
+                        if (r.lat && r.lng) {
+                            L.marker([r.lat, r.lng]).addTo(map).bindPopup(`<b>${r.type}</b><br>Status: ${r.status}<br>Location: ${r.location}`);
+                        }
+                    });
+                }, 100);
+            } else if (page === 'reports') {
+                const myReports = reports.filter(r => r.residentEmail === currentResident.email);
+                content.innerHTML = `<h4>My Incident Reports</h4>${myReports.map(r => `
+                    <div class="report-item">
+                        <strong>#${r.id}</strong> - ${r.type}<br>
+                        Status: <span class="status-badge ${r.status.toLowerCase().replace(' ', '-')}">${r.status}</span><br>
+                        Date: ${new Date(r.date).toLocaleDateString()}<br>
+                        Location: ${r.location}<br>
+                        Description: ${r.desc.substring(0, 100)}${r.desc.length > 100 ? '...' : ''}
+                    </div>
+                `).join('') || '<p>No reports yet.</p>'}`;
+            } else if (page === 'about') {
+                content.innerHTML = `
+                    <h4>About Barangay Sta. Rita</h4>
+                    <p>Barangay Sta. Rita is committed to providing efficient and transparent public service to its residents of Olongapo City.</p>
+                    <h5>Contact Information</h5>
+                    <p><i class="fas fa-phone"></i> (047) 123-4567<br>
+                    <i class="fas fa-envelope"></i> starita@olongapo.gov.ph<br>
+                    <i class="fas fa-map-marker-alt"></i> Sta. Rita, Olongapo City, Zambales</p>
+                `;
+            }
+        }
+
+        function submitReport() {
+            const type = document.getElementById('repType')?.value;
+            const location = document.getElementById('repLoc')?.value;
+            const desc = document.getElementById('repDesc')?.value;
+            const severity = document.getElementById('repSev')?.value;
+            const msgDiv = document.getElementById('repMsg');
+
+            if (!type || type === 'Select Type' || !location || !desc) {
+                msgDiv.innerText = 'Please fill all fields';
+                msgDiv.style.display = 'block';
+                return;
+            }
+
+            const newReport = {
+                id: Date.now(),
+                type,
+                location,
+                desc,
+                severity,
+                status: 'Pending',
+                date: new Date().toISOString(),
+                residentEmail: currentResident.email,
+                residentName: `${currentResident.first} ${currentResident.last}`,
+                lat: 14.8445 + (Math.random() - 0.5) * 0.02,
+                lng: 120.2842 + (Math.random() - 0.5) * 0.02
+            };
+            reports.unshift(newReport);
+            localStorage.setItem('barangay_reports', JSON.stringify(reports));
+            alert('Report submitted successfully! Barangay will review it shortly.');
+            showResidentPage('reports');
+        }
+
+        function residentLogout() {
+            currentResident = null;
+            document.getElementById('residentAppPanel').style.display = 'none';
+            document.getElementById('residentAuthPanel').style.display = 'block';
+            closeResidentModal();
+        }
+
+        // Staff Functions
+        function staffLogin() {
+            const email = document.getElementById('staffEmail').value.trim();
+            const pass = document.getElementById('staffPass').value;
+            const validStaff = [
+                { email: 'admin@barangay.gov.ph', pass: 'admin123', name: 'Admin User', role: 'Administrator' },
+                { email: 'captain@barangay.gov.ph', pass: 'captain123', name: 'Kap. Juan Dela Cruz', role: 'Barangay Captain' },
+                { email: 'secretary@barangay.gov.ph', pass: 'secretary123', name: 'Sec. Maria Santos', role: 'Barangay Secretary' },
+                { email: 'staff@barangay.gov.ph', pass: 'staff123', name: 'Staff Member', role: 'Staff' }
+            ];
+            const found = validStaff.find(s => s.email === email && s.pass === pass);
+            const errorDiv = document.getElementById('staffError');
+
+            if (found) {
+                currentStaff = found;
+                launchStaffApp();
+            } else {
+                errorDiv.innerText = 'Invalid credentials. Authorized staff only.';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function launchStaffApp() {
+            document.getElementById('staffAuthPanel').style.display = 'none';
+            document.getElementById('staffAppPanel').style.display = 'block';
+            showStaffPage('incidents');
+        }
+
+        function showStaffPage(page) {
+            const staffDiv = document.getElementById('staffContent');
+            if (page === 'incidents') {
+                renderIncidentsList();
+            } else if (page === 'map') {
+                staffDiv.innerHTML = `<div id="staffMap" class="map-container"></div>`;
+                setTimeout(() => {
+                    const map = L.map('staffMap').setView([14.8445, 120.2842], 14);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    reports.forEach(r => {
+                        if (r.lat && r.lng) {
+                            L.marker([r.lat, r.lng]).addTo(map).bindPopup(`
+                                <b>${r.type}</b><br>
+                                Status: ${r.status}<br>
+                                Severity: ${r.severity}<br>
+                                Reported by: ${r.residentName || 'Resident'}<br>
+                                Location: ${r.location}
+                            `);
+                        }
+                    });
+                }, 100);
+            } else if (page === 'residents') {
+                staffDiv.innerHTML = `<h4>Resident Registry (${residents.length} total)</h4>${residents.map(r => `
+                    <div class="report-item">
+                        <strong>${r.first} ${r.last}</strong><br>
+                        Email: ${r.email}<br>
+                        Contact: ${r.phone}<br>
+                        Address: ${r.address}<br>
+                        Joined: ${new Date(r.joinDate).toLocaleDateString()}
+                    </div>
+                `).join('') || '<p>No residents registered yet.</p>'}`;
+            } else if (page === 'analytics') {
+                const pending = reports.filter(r => r.status === 'Pending').length;
+                const inProgress = reports.filter(r => r.status === 'In Progress').length;
+                const resolved = reports.filter(r => r.status === 'Resolved').length;
+                staffDiv.innerHTML = `
+                    <h4>Analytics Dashboard</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                        <div style="background: var(--off-white); padding: 16px; border-radius: 12px; text-align: center;">
+                            <h3>${reports.length}</h3>
+                            <p>Total Reports</p>
+                        </div>
+                        <div style="background: var(--off-white); padding: 16px; border-radius: 12px; text-align: center;">
+                            <h3>${pending}</h3>
+                            <p>Pending</p>
+                        </div>
+                        <div style="background: var(--off-white); padding: 16px; border-radius: 12px; text-align: center;">
+                            <h3>${resolved}</h3>
+                            <p>Resolved</p>
+                        </div>
+                    </div>
+                    <div style="background: var(--off-white); padding: 20px; border-radius: 12px;">
+                        <h5>Resolution Rate: ${reports.length ? Math.round((resolved / reports.length) * 100) : 0}%</h5>
+                        <div style="background: #ddd; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div style="background: var(--primary-green); width: ${reports.length ? (resolved / reports.length) * 100 : 0}%; height: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            } else if (page === 'personnel') {
+                staffDiv.innerHTML = `
+                    <h4>Barangay Sta. Rita Officials & Personnel</h4>
+                    <div class="personnel-list">
+                        <div class="personnel-card"><i class="fas fa-user-tie fa-2x"></i><h5>Hon. Juan Dela Cruz</h5><p>Barangay Captain</p><small>captain@barangay.gov.ph</small></div>
+                        <div class="personnel-card"><i class="fas fa-user fa-2x"></i><h5>Maria Santos</h5><p>Barangay Secretary</p><small>secretary@barangay.gov.ph</small></div>
+                        <div class="personnel-card"><i class="fas fa-user fa-2x"></i><h5>Ramon Reyes</h5><p>Kagawad - Peace & Order</p><small>09351234567</small></div>
+                        <div class="personnel-card"><i class="fas fa-user fa-2x"></i><h5>Lisa Gomez</h5><p>Kagawad - Health</p><small>09359876543</small></div>
+                        <div class="personnel-card"><i class="fas fa-user fa-2x"></i><h5>Pedro Santos</h5><p>Kagawad - Infrastructure</p><small>09357778888</small></div>
+                        <div class="personnel-card"><i class="fas fa-user fa-2x"></i><h5>Elena Cruz</h5><p>Treasurer</p><small>09356667777</small></div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderIncidentsList() {
+            const staffDiv = document.getElementById('staffContent');
+            staffDiv.innerHTML = `<h4>All Incident Reports</h4><div id="incidentList"></div>`;
+            const container = document.getElementById('incidentList');
+            container.innerHTML = reports.map(r => `
+                <div class="report-item">
+                    <strong>#${r.id}</strong> - ${r.type}<br>
+                    Reported by: ${r.residentName || 'Anonymous'}<br>
+                    Location: ${r.location}<br>
+                    Description: ${r.desc.substring(0, 100)}${r.desc.length > 100 ? '...' : ''}<br>
+                    Status: 
+                    <select id="status-${r.id}" onchange="updateStatus(${r.id})">
+                        <option ${r.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option ${r.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                        <option ${r.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                    </select>
+                    <button class="btn-access" style="padding: 5px 15px; margin-left: 10px;" onclick="sendOTP('${r.residentEmail}')">Send OTP</button>
+                    <button class="btn-access" style="padding: 5px 15px; background: #777;" onclick="cancelOTP()">Cancel OTP</button>
+                </div>
+            `).join('') || '<p>No reports submitted yet.</p>';
+        }
+
+        function updateStatus(id) {
+            const newStatus = document.getElementById(`status-${id}`).value;
+            const report = reports.find(r => r.id === id);
+            if (report) {
+                report.status = newStatus;
+                localStorage.setItem('barangay_reports', JSON.stringify(reports));
+                alert(`Report #${id} status updated to ${newStatus}`);
+                renderIncidentsList();
+            }
+        }
+
+        function sendOTP(email) {
+            if (otpTimeout) clearTimeout(otpTimeout);
+            alert(`📱 OTP sent to ${email}\n(Simulated: 123456 - Valid for 60 seconds)`);
+            otpTimeout = setTimeout(() => {
+                alert('⏰ OTP has expired. Please request a new one.');
+            }, 60000);
+        }
+
+        function cancelOTP() {
+            if (otpTimeout) {
+                clearTimeout(otpTimeout);
+                otpTimeout = null;
+                alert('OTP sending has been cancelled.');
+            } else {
+                alert('No active OTP request to cancel.');
+            }
+        }
+
+        function staffLogout() {
+            currentStaff = null;
+            document.getElementById('staffAppPanel').style.display = 'none';
+            document.getElementById('staffAuthPanel').style.display = 'block';
+            closeStaffModal();
+        }
+
+        // Terms and Conditions
+        function showTerms(type) {
+            let content = '';
+            if (type === 'resident') {
+                content = `📜 RESIDENT TERMS & CONDITIONS\n\n1. All reported incidents must be truthful and accurate.\n2. Respect barangay officials and staff at all times.\n3. Your data is protected under RA 10173 (Data Privacy Act).\n4. False reporting may result in penalties.\n5. You must be a resident of Barangay Sta. Rita.\n6. Keep your login credentials confidential.\n\nBy using this portal, you agree to these terms.`;
+            } else if (type === 'staff') {
+                content = `📜 STAFF TERMS & CONDITIONS\n\n1. Authorized barangay personnel only.\n2. Maintain strict confidentiality of resident data.\n3. All actions are logged for audit purposes.\n4. Comply with RA 10173 Data Privacy Act.\n5. Report any security breaches immediately.\n6. Use your credentials responsibly.\n\nViolations may lead to disciplinary action.`;
+            } else {
+                content = `📜 PRIVACY POLICY\n\nBarangay Sta. Rita is committed to protecting your personal information in compliance with the Data Privacy Act of 2012 (RA 10173).\n\n- Data collected is used only for barangay services.\n- We do not share your information with third parties.\n- You have the right to access and correct your data.\n- Contact our Data Protection Officer for concerns.\n\nFor questions: starita.brgy@olongapo.gov.ph`;
+            }
+            alert(content);
+        }
+
+        // Modal Controls
+        function openResidentModal() {
+            document.getElementById('residentModal').classList.add('active');
+            showLogin();
+        }
+
+        function closeResidentModal() {
+            document.getElementById('residentModal').classList.remove('active');
+            document.getElementById('residentAppPanel').style.display = 'none';
+            document.getElementById('residentAuthPanel').style.display = 'block';
+        }
+
+        function openStaffModal() {
+            document.getElementById('staffModal').classList.add('active');
+            document.getElementById('staffAuthPanel').style.display = 'block';
+            document.getElementById('staffAppPanel').style.display = 'none';
+            document.getElementById('staffEmail').value = '';
+            document.getElementById('staffPass').value = '';
+            document.getElementById('staffError').style.display = 'none';
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffModal').classList.remove('active');
+        }
+
+        function showSignup() {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('signupView').style.display = 'block';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('signupError').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('signupView').style.display = 'none';
+            document.getElementById('loginView').style.display = 'block';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('signupError').style.display = 'none';
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        };
+    </script>
+</body>
+</html>

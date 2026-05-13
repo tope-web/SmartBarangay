@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Barangay — Starita, Olongapo City</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="SmartBarangay_Staff.css"/>
+  <!-- EmailJS SDK for real OTP email delivery -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    /* OTP input animation */
+    @keyframes otpShake {
+      0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}
+    }
+    .otp-shake { animation: otpShake .4s ease; }
+    /* Clear confirm bar */
+    @keyframes fadeIn {
+      from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}
+    }
+    /* Report detail highlight */
+    .report-reporter-badge {
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(100,181,246,0.1);border:1px solid rgba(100,181,246,0.25);
+      border-radius:20px;padding:3px 12px;font-size:.75rem;color:#64B5F6;
+      font-family:var(--font-mono);margin-top:4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== LOADING SCREEN ========== -->
+<div id="loading-screen" class="screen active">
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <div class="loader-wrap">
+    <div class="hex-logo">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita Seal" class="loader-seal" onerror="this.style.display='none';document.querySelector('.hex-logo-fallback').style.display='block'"/>
+      <svg class="hex-logo-fallback" style="display:none" viewBox="0 0 120 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="60,2 118,32 118,72 60,102 2,72 2,32" stroke="#1565C0" stroke-width="2" fill="none"/>
+        <polygon points="60,14 106,39 106,65 60,90 14,65 14,39" stroke="#0D47A1" stroke-width="1" fill="rgba(21,101,192,0.08)"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#1E88E5" font-family="Orbitron" font-size="18" font-weight="900">SB</text>
+        <text x="50%" y="70%" dominant-baseline="middle" text-anchor="middle" fill="#42A5F5" font-family="Share Tech Mono" font-size="6">STARITA v2.0</text>
+      </svg>
+    </div>
+    <div class="loader-title">Smart Barangay</div>
+    <div class="loader-sub">Starita, Olongapo City · Staff Portal</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="loader-status" id="loader-status">Loading modules...</div>
+    <div class="boot-lines" id="boot-lines"></div>
+  </div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+</div>
+
+<!-- ========== LANDING SCREEN ========== -->
+<div id="landing-screen" class="screen">
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <nav class="top-nav">
+    <div class="nav-logo">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita Seal" class="nav-seal" onerror="this.style.display='none'"/>
+      <span class="nav-brand">Smart Barangay Starita</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="nav-tag">Republic of the Philippines · Olongapo City · Staff Portal</div>
+      <a href="Index.html" style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-sec);text-decoration:none;border:1px solid var(--border);border-radius:4px;padding:4px 10px;letter-spacing:.08em;transition:color .2s,border-color .2s" onmouseover="this.style.color='var(--blue-accent)';this.style.borderColor='var(--blue-mid)'" onmouseout="this.style.color='';this.style.borderColor=''">← Back to Home</a>
+      <button class="theme-toggle-btn" id="landing-theme-btn" onclick="toggleStaffTheme()" title="Toggle Light/Dark">🌙</button>
+    </div>
+  </nav>
+  <div class="landing-content">
+    <div class="landing-badge">OFFICIAL BARANGAY SYSTEM</div>
+    <h1 class="landing-title">Smart<br/><span class="accent-text">Barangay</span><br/>Starita</h1>
+    <p class="landing-desc">
+      AI-powered staff management platform for Barangay Starita, Olongapo City. Centralized resident management, incident tracking, and real-time community operations.
+    </p>
+    <div class="landing-features">
+      <div class="feat-pill">⚡ AI Incident Priority</div>
+      <div class="feat-pill">🔒 Role-Based Access</div>
+      <div class="feat-pill">👥 Resident Registry</div>
+      <div class="feat-pill">🔔 Real-Time Alerts</div>
+      <div class="feat-pill">📧 OTP Verification</div>
+    </div>
+    <div class="landing-actions">
+      <button class="btn-primary" onclick="showScreen('login-screen')"><span class="btn-icon">🔑</span> Staff Login</button>
+      <button class="btn-secondary" onclick="showScreen('register-screen')"><span class="btn-icon">📋</span> Register Account</button>
+    </div>
+  </div>
+  <div class="landing-decor">
+    <div class="deco-ring r1"></div><div class="deco-ring r2"></div><div class="deco-ring r3"></div>
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-num" id="landing-residents">0</div><div class="stat-lbl">Residents</div></div>
+      <div class="stat-card"><div class="stat-num">24/7</div><div class="stat-lbl">Monitoring</div></div>
+    </div>
+  </div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+</div>
+
+<!-- ========== LOGIN SCREEN ========== -->
+<div id="login-screen" class="screen">
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <button class="theme-toggle-btn auth-theme-btn" id="login-theme-btn" onclick="toggleStaffTheme()" title="Toggle Light/Dark">🌙</button>
+      <div class="auth-header">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita" class="auth-seal-logo" onerror="this.style.display='none'"/>
+        <div class="auth-hex" style="display:none">⬡</div>
+        <div class="auth-title">Staff Login</div>
+        <div class="auth-sub">Barangay Starita · Authorized Personnel Only</div>
+      </div>
+      <div class="auth-body">
+        <div class="input-group">
+          <label>Employee ID / Email</label>
+          <div class="input-wrap">
+            <span class="inp-icon">👤</span>
+            <input type="text" placeholder="Enter your staff ID or email" id="login-email"/>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="inp-icon">🔒</span>
+            <input type="password" placeholder="Enter secure password" id="login-pass"/>
+          </div>
+        </div>
+        <div class="remember-row">
+          <label class="check-label"><input type="checkbox"/> <span>Remember this device</span></label>
+          <a href="#" class="forgot-link">Forgot Password?</a>
+        </div>
+        <button class="btn-primary full" onclick="doLogin()"><span class="btn-icon">🔐</span> Authenticate</button>
+        <div class="auth-divider"><span>— or —</span></div>
+        <button class="btn-ghost full" onclick="showScreen('register-screen')">Create Staff Account</button>
+        <button class="btn-back" onclick="showScreen('landing-screen')">← Back to Home</button>
+      </div>
+      <div class="auth-security"><span class="sec-dot"></span> 256-bit AES Encrypted · SSL Secured · Data Privacy Act Compliant</div>
+    </div>
+  </div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+</div>
+
+<!-- ========== REGISTER SCREEN ========== -->
+<div id="register-screen" class="screen">
+  <div class="grid-bg"></div>
+  <div class="scanline"></div>
+  <div class="auth-wrap wide">
+    <div class="auth-card wide-card">
+      <button class="theme-toggle-btn auth-theme-btn" id="reg-theme-btn" onclick="toggleStaffTheme()" title="Toggle Light/Dark">🌙</button>
+      <div class="auth-header">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita" class="auth-seal-logo" onerror="this.style.display='none'"/>
+        <div class="auth-hex" style="display:none">⬡</div>
+        <div class="auth-title">Staff Registration</div>
+        <div class="auth-sub">Barangay Starita, Olongapo City · Official Personnel Enrollment</div>
+      </div>
+      <div class="auth-body">
+        <div class="form-grid">
+          <div class="input-group">
+            <label>First Name</label>
+            <div class="input-wrap"><span class="inp-icon">👤</span><input type="text" placeholder="Juan" id="reg-fname"/></div>
+          </div>
+          <div class="input-group">
+            <label>Last Name</label>
+            <div class="input-wrap"><span class="inp-icon">👤</span><input type="text" placeholder="Dela Cruz" id="reg-lname"/></div>
+          </div>
+          <div class="input-group">
+            <label>Employee ID</label>
+            <div class="input-wrap"><span class="inp-icon">🪪</span><input type="text" placeholder="STA-2024-XXXX" id="reg-empid"/></div>
+          </div>
+          <div class="input-group">
+            <label>Personal Email <span style="font-size:.65rem;color:#42A5F5;font-family:var(--font-mono)">(OTP will be sent here)</span></label>
+            <div class="input-wrap">
+              <span class="inp-icon">📧</span>
+              <input type="email" placeholder="e.g. juandelacruz@gmail.com" id="reg-email"/>
+            </div>
+            <div style="font-size:.68rem;color:var(--text-dim);font-family:var(--font-mono);padding:3px 4px">Use any personal email — Gmail, Yahoo, Outlook, etc.</div>
+          </div>
+          <div class="input-group">
+            <label>Assigned Role</label>
+            <div class="input-wrap select-wrap">
+              <span class="inp-icon">🏛️</span>
+              <select id="reg-role">
+                <option value="">Select role</option>
+                <option value="admin">Barangay Captain / Admin</option>
+                <option value="secretary">Barangay Secretary</option>
+                <option value="treasurer">Barangay Treasurer</option>
+                <option value="kagawad">Kagawad</option>
+                <option value="lupon">Lupon Tagapamayapa</option>
+                <option value="tanod">Barangay Tanod</option>
+                <option value="health">Health Worker</option>
+                <option value="clerk">Records Clerk</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Contact Number</label>
+            <div class="input-wrap"><span class="inp-icon">📱</span><input type="tel" placeholder="+63 9XX XXX XXXX" id="reg-contact"/></div>
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <div class="input-wrap"><span class="inp-icon">🔒</span><input type="password" placeholder="Min. 8 chars" id="reg-pass"/></div>
+          </div>
+          <div class="input-group">
+            <label>Confirm Password</label>
+            <div class="input-wrap"><span class="inp-icon">🔒</span><input type="password" placeholder="Repeat password" id="reg-pass2"/></div>
+          </div>
+        </div>
+
+        <!-- OTP Notice Banner -->
+        <div style="background:rgba(30,136,229,0.08);border:1px solid rgba(30,136,229,0.2);border-radius:8px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:4px">
+          <span style="font-size:1.2rem;flex-shrink:0">📧</span>
+          <div>
+            <div style="font-family:var(--font-mono);font-size:.72rem;color:#42A5F5;margin-bottom:3px">EMAIL VERIFICATION REQUIRED</div>
+            <div style="font-size:.78rem;color:var(--text-sec);line-height:1.5">After submitting, a 6-digit OTP code will be sent to your personal email. You must verify it to complete registration. Use your real email address (Gmail, Yahoo, Outlook, etc.)</div>
+          </div>
+        </div>
+
+        <div class="tnc-box">
+          <div class="tnc-title">📜 Terms &amp; Conditions — Smart Barangay Staff Portal <a href="#" onclick="showTnCModal();return false;" style="color:#42A5F5;font-size:.8rem;margin-left:8px;text-decoration:underline;">[ View Full Terms ]</a></div>
+          <div class="tnc-scroll">
+            <div class="tnc-section"><strong>1. PURPOSE</strong><p>Smart Barangay Starita is an official digital platform for authorized barangay personnel. Use is strictly limited to duly appointed barangay officials and staff of Barangay Starita, Olongapo City.</p></div>
+            <div class="tnc-section"><strong>2. AUTHORIZED ACCESS ONLY</strong><p>Access is role-based. Unauthorized access or credential sharing is prohibited under Republic Act No. 10175 (Cybercrime Prevention Act of 2012).</p></div>
+            <div class="tnc-section"><strong>3. DATA PRIVACY</strong><p>All resident information is protected under Republic Act No. 10173 (Data Privacy Act of 2012). Staff must not disclose resident data to unauthorized parties.</p></div>
+            <div class="tnc-section"><strong>4. ACCEPTABLE USE</strong><p>System must be used exclusively for official barangay functions. All activities are logged and monitored.</p></div>
+            <div class="tnc-section"><strong>5. ACCOUNT SECURITY</strong><p>You are responsible for the confidentiality of your credentials. Immediately report unauthorized access to the system administrator.</p></div>
+          </div>
+        </div>
+
+        <label class="check-label tnc-check">
+          <input type="checkbox" id="tnc-agree"/>
+          <span>I have read and agree to the <a href="#" onclick="showTnCModal();return false;" style="color:#42A5F5;text-decoration:underline;">Terms &amp; Conditions</a></span>
+        </label>
+        <label class="check-label">
+          <input type="checkbox" id="reg-confirm"/>
+          <span>I confirm my information is accurate and I am authorized barangay personnel</span>
+        </label>
+
+        <div class="form-actions">
+          <button class="btn-ghost" onclick="showScreen('login-screen')">← Already have an account</button>
+          <button class="btn-primary" onclick="doRegister()"><span class="btn-icon">📧</span> Send Verification Code</button>
+        </div>
+        <button class="btn-back" onclick="showScreen('landing-screen')">← Back to Home</button>
+      </div>
+      <div class="auth-security"><span class="sec-dot"></span> 256-bit AES Encrypted · OTP Verified · Data Privacy Act Compliant</div>
+    </div>
+  </div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+</div>
+
+<!-- ========== DASHBOARD SCREEN ========== -->
+<div id="dashboard-screen" class="screen" style="flex-direction:row;overflow:hidden;">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita" class="sb-seal-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+      <div class="sb-brand-icon" style="display:none">⬡</div>
+      <div>
+        <div class="sb-brand-name">Smart Barangay</div>
+        <div class="sb-brand-sub">STARITA · OLONGAPO CITY</div>
+      </div>
+    </div>
+    <div class="sb-user">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="sb-avatar">👤</div>
+        <div class="sb-user-info">
+          <div class="sb-username" id="dash-username">Staff</div>
+          <div class="sb-role" id="dash-role">Loading...</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">MAIN</div>
+      <a class="sb-link active" onclick="switchPanel('dash')"><span>📊</span> Dashboard</a>
+      <a class="sb-link" onclick="switchPanel('incidents')"><span>🚨</span> Incidents</a>
+      <a class="sb-link" onclick="switchPanel('residents')"><span>👥</span> Residents</a>
+      <div class="sb-section">MANAGEMENT</div>
+      <a class="sb-link" onclick="switchPanel('livemap')"><span>🗺️</span> Live Map</a>
+      <a class="sb-link" onclick="switchPanel('analytics')"><span>📊</span> Analytics</a>
+      <a class="sb-link" onclick="switchPanel('announcements')"><span>📢</span> Announcements</a>
+      <a class="sb-link" onclick="switchPanel('officials')"><span>👔</span> Officials</a>
+      <a class="sb-link" onclick="switchPanel('activitylog')"><span>📋</span> Activity Log</a>
+      <div class="sb-section">SYSTEM</div>
+      <a class="sb-link" onclick="switchPanel('notifications')"><span>🔔</span> Notifications</a>
+      <a class="sb-link" onclick="switchPanel('settings')"><span>⚙️</span> Settings</a>
+      <a class="sb-link" onclick="doLogout()"><span>🚪</span> Logout</a>
+    </nav>
+  </aside>
+
+  <div class="dash-wrap">
+    <main class="dash-main">
+      <header class="dash-header">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="dash-breadcrumb" id="dash-breadcrumb">Dashboard</div>
+        <div class="dash-header-right">
+          <div class="search-bar"><span>🔍</span><input type="text" placeholder="Search residents, incidents..."/></div>
+          <div class="notif-bell" onclick="switchPanel('notifications')">🔔 <span class="notif-count" id="notif-count-badge">0</span></div>
+          <button class="theme-toggle-pill" id="staff-theme-btn" onclick="toggleStaffTheme()" title="Toggle Light/Dark Mode">
+            <span class="pill-icon" id="staff-theme-icon">🌙</span>
+            <span id="staff-theme-label">Dark Mode</span>
+          </button>
+          <div class="dash-time" id="dash-time"></div>
+        </div>
+      </header>
+
+      <!-- DASHBOARD PANEL -->
+      <div class="panel active" id="panel-dash">
+        <div class="panel-title">Central Dashboard <span class="live-badge">● LIVE</span></div>
+        <div class="kpi-grid">
+          <div class="kpi-card blue">
+            <div class="kpi-icon">👥</div>
+            <div class="kpi-val" id="kpi-residents">0</div>
+            <div class="kpi-lbl">Total Residents</div>
+            <div class="kpi-trend" id="kpi-res-trend">No data yet</div>
+          </div>
+          <div class="kpi-card orange">
+            <div class="kpi-icon">🚨</div>
+            <div class="kpi-val" id="kpi-incidents">0</div>
+            <div class="kpi-lbl">Active Incidents</div>
+            <div class="kpi-trend" id="kpi-inc-trend">No data yet</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon">✅</div>
+            <div class="kpi-val" id="kpi-completed">0</div>
+            <div class="kpi-lbl">Reports Resolved</div>
+            <div class="kpi-trend">This month</div>
+          </div>
+        </div>
+        <div class="dash-grid-two">
+          <div class="dash-widget">
+            <div class="widget-title">🔔 Recent Notifications</div>
+            <div class="notif-list" id="dash-notif-list">
+              <div style="padding:20px;text-align:center;opacity:0.5;">No notifications</div>
+            </div>
+          </div>
+          <div class="dash-widget">
+            <div class="widget-title">✅ Today's Tasks</div>
+            <div class="task-list" id="dash-task-list">
+              <div style="padding:20px;text-align:center;opacity:0.5;">No tasks for today</div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-grid-two">
+          <div class="dash-widget" style="grid-column:1/-1">
+            <div class="widget-title">📊 Monthly Incident Trend</div>
+            <div class="chart-area">
+              <div class="bar-chart" id="monthly-chart">
+                <div class="bar-item"><div class="bar" id="bar-0" style="--h:0px"></div><div class="bar-lbl">Jan</div></div>
+                <div class="bar-item"><div class="bar" id="bar-1" style="--h:0px"></div><div class="bar-lbl">Feb</div></div>
+                <div class="bar-item"><div class="bar" id="bar-2" style="--h:0px"></div><div class="bar-lbl">Mar</div></div>
+                <div class="bar-item"><div class="bar" id="bar-3" style="--h:0px"></div><div class="bar-lbl">Apr</div></div>
+                <div class="bar-item"><div class="bar" id="bar-4" style="--h:0px"></div><div class="bar-lbl">May</div></div>
+                <div class="bar-item"><div class="bar" id="bar-5" style="--h:0px"></div><div class="bar-lbl">Jun</div></div>
+                <div class="bar-item"><div class="bar" id="bar-6" style="--h:0px"></div><div class="bar-lbl">Jul</div></div>
+                <div class="bar-item"><div class="bar" id="bar-7" style="--h:0px"></div><div class="bar-lbl">Aug</div></div>
+                <div class="bar-item"><div class="bar" id="bar-8" style="--h:0px"></div><div class="bar-lbl">Sep</div></div>
+                <div class="bar-item"><div class="bar" id="bar-9" style="--h:0px"></div><div class="bar-lbl">Oct</div></div>
+                <div class="bar-item"><div class="bar" id="bar-10" style="--h:0px"></div><div class="bar-lbl">Nov</div></div>
+                <div class="bar-item"><div class="bar active" id="bar-11" style="--h:0px"></div><div class="bar-lbl">Dec</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INCIDENTS PANEL -->
+      <div class="panel" id="panel-incidents">
+        <div class="panel-title">🚨 Incident Management</div>
+        <div class="toolbar">
+          <button class="btn-sm blue" onclick="showAddIncidentModal()">+ New Incident</button>
+          <button class="btn-sm">Filter</button>
+          <button class="btn-sm">Export</button>
+          <div class="flex-spacer"></div>
+          <input type="text" class="search-sm" placeholder="Search incidents..."/>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th style="color:#64B5F6">👤 Reporter</th>
+                <th>Date</th>
+                <th>AI Priority</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incidents-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:24px;opacity:0.5;">No incidents recorded</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESIDENTS PANEL -->
+      <div class="panel" id="panel-residents">
+        <div class="panel-title">👥 Resident Management</div>
+        <div class="toolbar">
+          <button class="btn-sm blue" onclick="showAddResidentModal()">+ Add Resident</button>
+          <button class="btn-sm">Export</button>
+          <div class="flex-spacer"></div>
+          <input type="text" class="search-sm" placeholder="Search residents..." oninput="filterResidents(this.value)"/>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Res ID</th>
+                <th>Full Name</th>
+                <th>Purok</th>
+                <th>Category</th>
+                <th style="color:#64B5F6">👤 Registered By</th>
+                <th>Reports Filed</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="residents-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:24px;opacity:0.5;">No residents registered</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS PANEL -->
+      <div class="panel" id="panel-notifications">
+        <div class="panel-title">🔔 Notifications</div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn-sm blue" onclick="addTestNotification()">+ Test Notification</button>
+          <button class="btn-sm" onclick="markAllNotifsRead()">Mark All Read</button>
+          <!-- CLEAR ALL TOGGLE -->
+          <button class="btn-sm orange" onclick="clearAllNotifs()" id="clear-notif-btn"
+            style="display:flex;align-items:center;gap:6px">
+            <span>🗑</span>
+            <span>Clear All Notifications</span>
+            <span id="clear-notif-arrow" style="font-size:.65rem;transition:transform .2s">▼</span>
+          </button>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim)" id="notif-count-label"></div>
+        </div>
+        <div class="notif-full-list" id="notif-full-list">
+          <div style="padding:32px;text-align:center;opacity:0.5;">No notifications</div>
+        </div>
+      </div>
+
+      <!-- LIVE MAP PANEL -->
+      <div class="panel" id="panel-livemap">
+        <div class="panel-title">🗺️ Live Incident Map — Barangay Starita <span class="live-badge">● LIVE</span></div>
+        <div class="livemap-toolbar">
+          <div class="livemap-legend-wrap">
+            <div class="map-legend-item"><span class="legend-dot" style="background:#D32F2F"></span> Critical</div>
+            <div class="map-legend-item"><span class="legend-dot" style="background:#E65100"></span> High</div>
+            <div class="map-legend-item"><span class="legend-dot" style="background:#F57F17"></span> Medium</div>
+            <div class="map-legend-item"><span class="legend-dot" style="background:#1565C0"></span> Low</div>
+            <div class="map-legend-item"><span class="legend-dot" style="background:#00C853"></span> Resolved</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="map-filter-purok" class="search-sm" onchange="renderLiveMap()" style="width:auto;cursor:pointer">
+              <option value="">All Puroks</option>
+              <option>Purok 1</option><option>Purok 2</option><option>Purok 3</option>
+              <option>Purok 4</option><option>Purok 5</option><option>Purok 6</option>
+            </select>
+            <select id="map-filter-status" class="search-sm" onchange="renderLiveMap()" style="width:auto;cursor:pointer">
+              <option value="">All Statuses</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="in-progress">⚙️ In Progress</option>
+              <option value="completed">✅ Completed</option>
+            </select>
+            <button class="btn-sm blue" onclick="renderLiveMap()">🔄 Refresh</button>
+          </div>
+        </div>
+        <!-- OpenStreetMap embed for Barangay Starita, Olongapo City -->
+        <div class="livemap-container">
+          <div id="livemap-frame-wrap" style="position:relative;width:100%;height:100%;">
+            <iframe
+              id="osm-map"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=120.2680%2C14.8220%2C120.2980%2C14.8520&layer=mapnik&marker=14.8370%2C120.2830"
+              style="width:100%;height:100%;border:none;border-radius:8px;"
+              title="Barangay Starita Map"
+              loading="lazy"
+            ></iframe>
+            <!-- Incident overlay pins rendered on top -->
+            <div id="livemap-pins-overlay" style="position:absolute;inset:0;pointer-events:none;border-radius:8px;overflow:hidden;"></div>
+          </div>
+          <!-- Incident list sidebar -->
+          <div class="livemap-sidebar">
+            <div class="livemap-sidebar-title">📍 Active Incidents</div>
+            <div id="livemap-incident-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:420px;"></div>
+          </div>
+        </div>
+        <!-- Stats bar -->
+        <div class="livemap-stats" id="livemap-stats"></div>
+        <div style="font-family:var(--font-mono);font-size:.6rem;color:var(--text-dim);text-align:center;margin-top:-8px;">
+          Map data © <a href="https://www.openstreetmap.org/" target="_blank" style="color:var(--blue-accent);text-decoration:none;">OpenStreetMap</a> contributors — Barangay Starita, Olongapo City, Zambales, Philippines
+        </div>
+      </div>
+
+      <!-- ANALYTICS PANEL -->
+      <div class="panel" id="panel-analytics">
+        <div class="panel-title">📊 Analytics &amp; Reports Summary</div>
+        <div class="analytics-kpi-row" id="analytics-kpis"></div>
+        <div class="analytics-grid">
+          <div class="analytics-card" id="analytics-severity-card">
+            <div class="analytics-card-title">🔴 Incidents by Severity</div>
+            <div id="analytics-severity-chart" class="donut-chart-wrap"></div>
+          </div>
+          <div class="analytics-card" id="analytics-status-card">
+            <div class="analytics-card-title">📋 Reports by Status</div>
+            <div id="analytics-status-chart" class="donut-chart-wrap"></div>
+          </div>
+          <div class="analytics-card wide" id="analytics-type-card">
+            <div class="analytics-card-title">🗂 Incidents by Type</div>
+            <div id="analytics-type-chart" class="hbar-chart"></div>
+          </div>
+          <div class="analytics-card" id="analytics-top-reporters">
+            <div class="analytics-card-title">🏆 Top Reporters</div>
+            <div id="analytics-reporters-list"></div>
+          </div>
+          <div class="analytics-card" id="analytics-purok-card">
+            <div class="analytics-card-title">📍 Incidents by Purok</div>
+            <div id="analytics-purok-chart" class="hbar-chart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENTS PANEL -->
+      <div class="panel" id="panel-announcements">
+        <div class="panel-title">📢 Announcements &amp; Community Bulletins</div>
+        <div class="toolbar">
+          <button class="btn-sm blue" onclick="showAddAnnouncementModal()">+ New Announcement</button>
+          <div class="flex-spacer"></div>
+          <input type="text" class="search-sm" placeholder="Search announcements..." oninput="filterAnnouncements(this.value)"/>
+        </div>
+        <div id="announcements-list" class="announcements-list">
+          <div style="padding:32px;text-align:center;opacity:.5">No announcements yet. Create the first one!</div>
+        </div>
+      </div>
+
+      <!-- OFFICIALS PANEL -->
+      <div class="panel" id="panel-officials">
+        <div class="panel-title">👔 Barangay Officials — Sta. Rita, Olongapo City</div>
+        <div class="officials-hero">
+          <div class="officials-seal-wrap">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGxCHdAn9ixamXUBd5h6uL0pAAQo9X4pM_Q&s" alt="Sta. Rita Seal" class="officials-seal" onerror="this.style.display='none'"/>
+          </div>
+          <div class="officials-hero-info">
+            <div class="officials-brgy-name">Barangay Sta. Rita</div>
+            <div class="officials-brgy-sub">Lungsod ng Olongapo · Zambales · Philippines</div>
+            <div class="officials-chips">
+              <span class="officials-chip">📞 +63 47 XXX XXXX</span>
+              <span class="officials-chip">📧 starita.brgy@olongapo.gov.ph</span>
+            </div>
+          </div>
+        </div>
+        <div class="officials-section-label">⭐ Punong Barangay</div>
+        <div class="officials-grid captain-grid">
+          <div class="official-tile captain-tile"><div class="official-tile-icon">👑</div><div class="official-tile-name">Hon. Rowena V. Cerezo</div><div class="official-tile-role">Barangay Captain · Punong Barangay</div></div>
+        </div>
+        <div class="officials-section-label">⚖️ Barangay Kagawad (Councilors)</div>
+        <div class="officials-grid">
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Joshua A. Gardon</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Joselito T. Cruz, Jr.</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Rodman A. Barroga</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Jerry C. Nidoy</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Ronald B. Guevarra</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Raquel Y. Atienza</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Hon. Dolores D. Valdez</div><div class="official-tile-role">Kagawad</div></div>
+          <div class="official-tile"><div class="official-tile-icon">🏛️</div><div class="official-tile-name">Kagawad Julius Q. Abejo</div><div class="official-tile-role">Kagawad (Additional Staff)</div></div>
+        </div>
+        <div class="officials-section-label">📋 Secretariat &amp; Youth</div>
+        <div class="officials-grid">
+          <div class="official-tile sk-tile"><div class="official-tile-icon">🌟</div><div class="official-tile-name">Hon. Precious Niña O. Delos Reyes</div><div class="official-tile-role">SK Chairman</div></div>
+          <div class="official-tile sec-tile"><div class="official-tile-icon">📝</div><div class="official-tile-name">Mr. Ryan Steve M. Escanlar</div><div class="official-tile-role">Barangay Secretary</div></div>
+          <div class="official-tile treas-tile"><div class="official-tile-icon">💰</div><div class="official-tile-name">Ms. Rowena C. Rufino</div><div class="official-tile-role">Barangay Treasurer</div></div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG PANEL -->
+      <div class="panel" id="panel-activitylog">
+        <div class="panel-title">📋 Activity Log</div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn-sm orange" onclick="clearActivityLog()">🗑 Clear Log</button>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:.65rem;color:var(--text-dim)" id="actlog-count"></div>
+        </div>
+        <div id="activitylog-list" class="activitylog-list">
+          <div style="padding:32px;text-align:center;opacity:.5">No activity recorded yet.</div>
+        </div>
+      </div>
+
+      <!-- SETTINGS PANEL -->
+      <div class="panel" id="panel-settings">
+        <div class="panel-title">⚙️ Account Settings</div>
+        <div class="settings-grid">
+          <div class="settings-section">
+            <div class="ss-title">Profile</div>
+            <div class="input-group"><label>Full Name</label><div class="input-wrap"><input type="text" id="set-name" value=""/></div></div>
+            <div class="input-group">
+              <label>Personal Email</label>
+              <div class="input-wrap"><input type="email" id="set-email" value=""/></div>
+              <div style="font-size:.67rem;color:var(--text-dim);font-family:var(--font-mono);padding:2px 4px">Personal email (Gmail, Yahoo, Outlook, etc.)</div>
+            </div>
+            <div class="input-group"><label>Contact</label><div class="input-wrap"><input type="tel" id="set-contact" value=""/></div></div>
+            <button class="btn-sm blue" onclick="saveProfile()">Save Profile</button>
+          </div>
+          <div class="settings-section">
+            <div class="ss-title">Security</div>
+            <div class="input-group"><label>Current Password</label><div class="input-wrap"><input type="password" placeholder="••••••••"/></div></div>
+            <div class="input-group"><label>New Password</label><div class="input-wrap"><input type="password" placeholder="••••••••"/></div></div>
+            <div class="input-group"><label>Confirm Password</label><div class="input-wrap"><input type="password" placeholder="••••••••"/></div></div>
+            <button class="btn-sm blue">Update Password</button>
+          </div>
+          <div class="settings-section">
+            <div class="ss-title">Notification Preferences</div>
+            <label class="check-label"><input type="checkbox" checked/> <span>Critical incident alerts</span></label>
+            <label class="check-label"><input type="checkbox" checked/> <span>New resident registration</span></label>
+            <label class="check-label"><input type="checkbox" checked/> <span>Report completion alerts</span></label>
+            <label class="check-label"><input type="checkbox"/> <span>Daily summary digest</span></label>
+            <button class="btn-sm blue" style="margin-top:12px">Save Preferences</button>
+          </div>
+          <div class="settings-section">
+            <div class="ss-title">Session Info</div>
+            <div class="session-info">
+              <div class="si-row"><span>Role</span><strong id="si-role">—</strong></div>
+              <div class="si-row"><span>Barangay</span><strong>Starita, Olongapo City</strong></div>
+              <div class="si-row"><span>Login Time</span><strong id="si-login-time">—</strong></div>
+              <div class="si-row"><span>Account</span><strong id="si-account">—</strong></div>
+            </div>
+            <button class="btn-sm orange" onclick="doLogout()">🚪 Logout</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div id="toast" class="toast"></div>
+
+<script src="SmartBarangay_Staff.js"></script>
+</body>
+</html>

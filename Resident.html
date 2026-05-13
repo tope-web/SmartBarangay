@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartBarangay | Resident Portal — Sta. Rita</title>
+  <link rel="stylesheet" href="Resident.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<!-- ═ LOADING SCREEN ═ -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-content">
+    <div class="loading-logo">
+      <div class="logo-ring ring1"></div>
+      <div class="logo-ring ring2"></div>
+      <div class="logo-ring ring3"></div>
+      <img src="images.jpg" alt="Sta. Rita Seal" class="loading-seal" onerror="this.style.display='none';document.querySelector('.logo-icon-fallback').style.display='flex'"/>
+      <div class="logo-icon logo-icon-fallback" style="display:none"><i class="fas fa-shield-halved"></i></div>
+    </div>
+    <div class="loading-title">SmartBarangay</div>
+    <div class="loading-subtitle">Sta. Rita · Olongapo City</div>
+    <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+    <div class="loading-status" id="loadStatus">Initializing secure connection...</div>
+  </div>
+  <div class="loading-grid"></div>
+</div>
+
+<!-- ═ AUTH SCREEN ═ -->
+<div id="authScreen" class="auth-screen hidden">
+  <button class="auth-theme-toggle" id="authThemeBtn" onclick="toggleTheme()" title="Toggle Light/Dark Mode"><i class="fas fa-sun"></i></button>
+  <div class="auth-bg-anim"></div>
+  <div class="auth-container">
+    <!-- Left Panel -->
+    <div class="auth-left">
+      <div class="auth-brand">
+        <img src="images.jpg" alt="Sta. Rita Seal" class="brand-seal" onerror="this.style.display='none'"/>
+        <div>
+          <div class="brand-name">SmartBarangay</div>
+          <div class="brand-tagline">Sta. Rita · Olongapo City</div>
+        </div>
+      </div>
+      <div class="auth-features">
+        <div class="feature-item"><i class="fas fa-brain"></i><span>AI-Powered Incident Reporting</span></div>
+        <div class="feature-item"><i class="fas fa-bolt"></i><span>Real-Time Submission & Tracking</span></div>
+        <div class="feature-item"><i class="fas fa-bell"></i><span>Smart Notifications</span></div>
+        <div class="feature-item"><i class="fas fa-triangle-exclamation"></i><span>Emergency Quick Report</span></div>
+        <div class="feature-item"><i class="fas fa-chart-line"></i><span>Personal Dashboard</span></div>
+      </div>
+      <div class="auth-contact-box">
+        <div class="auth-contact-title"><i class="fas fa-phone"></i> Barangay Sta. Rita</div>
+        <div class="auth-contact-row"><i class="fas fa-phone-alt"></i> +63 47 XXX XXXX</div>
+        <div class="auth-contact-row"><i class="fas fa-envelope"></i> starita.brgy@olongapo.gov.ph</div>
+        <div class="auth-contact-row"><i class="fas fa-location-dot"></i> Sta. Rita, Olongapo City</div>
+      </div>
+      <div class="auth-quote">"Connecting residents to a safer, smarter community."</div>
+    </div>
+
+    <!-- Right Panel: Login -->
+    <div class="auth-right" id="loginPanel">
+      <div class="auth-form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your resident account</p>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email Address</label>
+        <input type="email" id="loginEmail" placeholder="resident@email.com" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-lock"></i> Password</label>
+        <div class="input-wrap">
+          <input type="password" id="loginPass" placeholder="••••••••" class="form-input"/>
+          <button class="toggle-pass" onclick="togglePass('loginPass',this)"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="checkbox-label"><input type="checkbox"/> Remember me</label>
+        <a href="#" class="link-text">Forgot password?</a>
+      </div>
+      <button class="btn-primary" onclick="doLogin()"><i class="fas fa-right-to-bracket"></i> Sign In</button>
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn-outline" onclick="showSignup()"><i class="fas fa-user-plus"></i> Create Account</button>
+      <div class="alert-box hidden" id="loginAlert"></div>
+    </div>
+
+    <!-- Right Panel: Register -->
+    <div class="auth-right hidden" id="signupPanel">
+      <div class="auth-form-header">
+        <h2>Create Account</h2>
+        <p>Join the Smart Barangay Community — Sta. Rita</p>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> First Name</label>
+          <input type="text" id="regFirst" placeholder="Juan" class="form-input"/>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Last Name</label>
+          <input type="text" id="regLast" placeholder="Dela Cruz" class="form-input"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-envelope"></i> Email Address</label>
+        <input type="email" id="regEmail" placeholder="resident@email.com" class="form-input"/>
+        <div class="field-hint">Must be a valid email (e.g. name@domain.com)</div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-phone"></i> Contact Number</label>
+        <div class="phone-input-wrap">
+          <span class="phone-prefix">+63</span>
+          <input type="tel" id="regPhone" placeholder="9XX XXX XXXX" class="form-input phone-field" maxlength="10" inputmode="numeric"/>
+        </div>
+        <div class="char-counter"><span id="phoneCharCount">0</span>/10 digits</div>
+        <div class="field-hint">Philippine mobile number — 10 digits (e.g. 9171234567)</div>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-home"></i> Home Address</label>
+        <input type="text" id="regAddress" placeholder="Street, Purok, Sta. Rita, Olongapo City" class="form-input"/>
+      </div>
+      <div class="form-group">
+        <label><i class="fas fa-map-marker-alt"></i> Target Barangay</label>
+        <input type="text" id="regBarangay" value="Sta. Rita" class="form-input" readonly style="opacity:.7;cursor:not-allowed"/>
+        <div class="field-hint"><i class="fas fa-lock" style="font-size:.7rem"></i> Fixed to Barangay Sta. Rita, Olongapo City</div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <div class="input-wrap">
+            <input type="password" id="regPass" placeholder="Min 8 chars" class="form-input" oninput="checkPasswordStrength(this.value)"/>
+            <button class="toggle-pass" onclick="togglePass('regPass',this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="password-strength-wrap" id="passStrengthWrap" style="display:none">
+            <div class="pass-strength-bar"><div id="passStrengthBar" class="pass-strength-fill"></div></div>
+            <div id="passStrengthLabel" class="pass-strength-label"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Confirm</label>
+          <input type="password" id="regConfirm" placeholder="Re-enter" class="form-input"/>
+        </div>
+      </div>
+      <div class="password-rules-box">
+        <div class="pass-rules-title"><i class="fas fa-circle-info"></i> Password must contain:</div>
+        <div class="pass-rules-grid">
+          <div class="pass-rule" id="rule-length"><i class="fas fa-circle-xmark"></i> At least 8 characters</div>
+          <div class="pass-rule" id="rule-upper"><i class="fas fa-circle-xmark"></i> Uppercase letter (A–Z)</div>
+          <div class="pass-rule" id="rule-lower"><i class="fas fa-circle-xmark"></i> Lowercase letter (a–z)</div>
+          <div class="pass-rule" id="rule-number"><i class="fas fa-circle-xmark"></i> Number (0–9)</div>
+          <div class="pass-rule" id="rule-special"><i class="fas fa-circle-xmark"></i> Special char (? ! @ # $ % ^ &amp; *)</div>
+        </div>
+        <div class="pass-example"><i class="fas fa-lightbulb"></i> Example: <code>AbC93?!</code></div>
+      </div>
+      <div class="terms-box">
+        <label class="checkbox-label">
+          <input type="checkbox" id="agreeTerms"/>
+          <span>I have read and agree to the
+            <a href="#" class="link-text" onclick="toggleTerms(); return false;">
+              <i class="fas fa-file-contract"></i> Terms &amp; Conditions
+            </a>
+          </span>
+        </label>
+        <div class="terms-quick-note">
+          <i class="fas fa-shield-halved"></i>
+          Your data is protected under RA 10173 (Data Privacy Act of 2012).
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doSignup()"><i class="fas fa-user-plus"></i> Create My Account</button>
+      <button class="btn-outline" onclick="showLogin()"><i class="fas fa-arrow-left"></i> Back to Sign In</button>
+      <div class="alert-box hidden" id="signupAlert"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═ MAIN APP ═ -->
+<div id="mainApp" class="main-app hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="images.jpg" alt="Seal" class="sidebar-seal" onerror="this.style.display='none'"/>
+      <div class="sidebar-brand-text">SmartBarangay</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showPage('dashboard',this)"><i class="fas fa-gauge-high"></i><span>Dashboard</span></a>
+      <a href="#" class="nav-item" onclick="showPage('report',this)"><i class="fas fa-triangle-exclamation"></i><span>Report Incident</span></a>
+      <a href="#" class="nav-item" onclick="showPage('livemap',this)"><i class="fas fa-map-location-dot"></i><span>Live Map</span></a>
+      <a href="#" class="nav-item" onclick="showPage('myreports',this)"><i class="fas fa-list-check"></i><span>My Reports</span></a>
+      <a href="#" class="nav-item" onclick="showPage('notifications',this)"><i class="fas fa-bell"></i><span>Notifications<span class="badge hidden" id="notifBadge">0</span></span></a>
+      <a href="#" class="nav-item" onclick="showPage('feedback',this)"><i class="fas fa-comment-dots"></i><span>Feedback</span></a>
+      <a href="#" class="nav-item" onclick="showPage('aboutus',this)"><i class="fas fa-building-columns"></i><span>About Us</span></a>
+      <a href="#" class="nav-item" onclick="showPage('profile',this)"><i class="fas fa-user-circle"></i><span>My Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar-sm" id="sidebarAvatar"></div>
+        <div class="user-info-sm">
+          <div id="sidebarName"></div>
+          <div class="user-role">Resident · Sta. Rita</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content-area">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="btn-theme-toggle icon-btn" onclick="toggleTheme()" id="themeToggleBtn" title="Toggle Light/Dark Mode"><i class="fas fa-sun"></i></button>
+        <button class="emergency-btn" onclick="showEmergency()"><i class="fas fa-bolt"></i> EMERGENCY</button>
+        <button class="icon-btn" onclick="showPage('notifications',document.querySelector('[onclick*=notifications]'))">
+          <i class="fas fa-bell"></i><span class="badge-top hidden" id="topNotifBadge">0</span>
+        </button>
+        <div class="topbar-user" onclick="showPage('profile',null)">
+          <div class="user-avatar-sm" id="topAvatar"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <main class="page-container">
+
+      <!-- ── DASHBOARD ── -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1>Good day, <span id="dashName">Juan</span> 👋</h1>
+          <p class="page-sub">Here's your community overview — Barangay Sta. Rita</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-file-circle-check"></i></div><div class="stat-info"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total Reports</div></div></div>
+          <div class="stat-card"><div class="stat-icon yellow"><i class="fas fa-hourglass-half"></i></div><div class="stat-info"><div class="stat-num" id="statPending">0</div><div class="stat-label">Pending</div></div></div>
+          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-circle-check"></i></div><div class="stat-info"><div class="stat-num" id="statResolved">0</div><div class="stat-label">Resolved</div></div></div>
+          <div class="stat-card"><div class="stat-icon red"><i class="fas fa-spinner fa-spin"></i></div><div class="stat-info"><div class="stat-num" id="statProgress">0</div><div class="stat-label">In Progress</div></div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="dash-card-header"><i class="fas fa-clock-rotate-left"></i> Recent Reports</div>
+            <div class="report-list" id="dashRecentReports">
+              <div class="empty-state"><i class="fas fa-inbox"></i><p>No reports yet. Submit your first incident report!</p></div>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-header"><i class="fas fa-bell"></i> Notifications</div>
+            <div class="notif-list-mini" id="dashNotifMini">
+              <div class="empty-state"><i class="fas fa-bell-slash"></i><p>No notifications yet.</p></div>
+            </div>
+          </div>
+          <div class="dash-card wide">
+            <div class="dash-card-header"><i class="fas fa-chart-bar"></i> Report Activity (Last 7 Days)</div>
+            <div class="mini-chart" id="dashChart">
+              <div class="bar-wrap"><div class="bar" id="bar0" style="height:0%"></div><div class="bar-label">Mon</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar1" style="height:0%"></div><div class="bar-label">Tue</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar2" style="height:0%"></div><div class="bar-label">Wed</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar3" style="height:0%"></div><div class="bar-label">Thu</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar4" style="height:0%"></div><div class="bar-label">Fri</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar5" style="height:0%"></div><div class="bar-label">Sat</div></div>
+              <div class="bar-wrap"><div class="bar" id="bar6" style="height:0%"></div><div class="bar-label">Sun</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── REPORT INCIDENT ── -->
+      <section class="page" id="page-report">
+        <div class="page-header">
+          <h1><i class="fas fa-triangle-exclamation"></i> Report an Incident</h1>
+          <p class="page-sub">AI-assisted reporting — fill out the form below</p>
+        </div>
+        <div class="report-form-wrap">
+          <div class="ai-banner"><i class="fas fa-brain"></i> AI Analysis Active — Your report will be automatically classified and prioritized.</div>
+          <div class="form-section">
+            <div class="form-section-title">Incident Details</div>
+            <div class="form-group">
+              <label>Incident Type</label>
+              <select class="form-input" id="incidentType">
+                <option value="">— Select Type —</option>
+                <option>Public Safety</option>
+                <option>Infrastructure / Road</option>
+                <option>Flood / Drainage</option>
+                <option>Illegal Dumping / Garbage</option>
+                <option>Noise Complaint</option>
+                <option>Stray Animals</option>
+                <option>Electrical / Street Lights</option>
+                <option>Health &amp; Sanitation</option>
+                <option>Vandalism</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Location / Address</label>
+              <input type="text" class="form-input" id="incidentLocation" placeholder="e.g. Rizal Street, near Barangay Hall"/>
+              <div class="map-picker-wrap">
+                <div class="map-picker-header">
+                  <i class="fas fa-map-location-dot"></i>
+                  <span>Pin Location on Map <span class="map-tag">OpenStreetMap · Live</span></span>
+                  <button class="btn-gps" onclick="getGPS()" title="Use my GPS location"><i class="fas fa-crosshairs"></i> Use My Location</button>
+                </div>
+                <div id="reportMapPicker" class="map-picker-container"></div>
+                <div class="map-coords" id="mapCoords"><i class="fas fa-info-circle"></i> Click on the map to pin the exact incident location</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea class="form-input" id="incidentDesc" rows="4" placeholder="Describe the incident in detail. The AI will analyze and classify your report..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Severity Level</label>
+              <div class="severity-btns">
+                <button class="sev-btn low active" onclick="setSev(this,'low')">Low</button>
+                <button class="sev-btn medium" onclick="setSev(this,'medium')">Medium</button>
+                <button class="sev-btn high" onclick="setSev(this,'high')">High</button>
+                <button class="sev-btn critical" onclick="setSev(this,'critical')">Critical</button>
+              </div>
+              <div id="autoSevIndicator" class="auto-sev-indicator hidden"></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Upload Evidence</div>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" ondrop="handleDrop(event)" ondragover="event.preventDefault()">
+              <i class="fas fa-cloud-arrow-up"></i>
+              <div>Drag &amp; drop photos or click to browse</div>
+              <div class="upload-hint">JPG, PNG up to 10MB each</div>
+              <input type="file" id="fileInput" accept="image/*" multiple hidden onchange="handleFiles(this.files)"/>
+            </div>
+            <div id="uploadPreview" class="upload-preview"></div>
+          </div>
+          <div class="form-section" id="aiBox" style="display:none">
+            <div class="form-section-title"><i class="fas fa-brain"></i> AI Analysis Result</div>
+            <div id="aiResult"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-secondary" onclick="analyzeReport()"><i class="fas fa-brain"></i> Analyze with AI</button>
+            <button class="btn-primary" onclick="submitReport()"><i class="fas fa-paper-plane"></i> Submit Report <span style="font-size:.75rem;opacity:.8;margin-left:4px">(Auto AI ✓)</span></button>
+          </div>
+          <div class="alert-box hidden" id="reportAlert"></div>
+        </div>
+      </section>
+
+      <!-- ── LIVE MAP ── -->
+      <section class="page" id="page-livemap">
+        <div class="page-header">
+          <h1><i class="fas fa-map-location-dot"></i> Live Incident Map</h1>
+          <p class="page-sub">Real-time view of all reported incidents in Barangay Sta. Rita</p>
+        </div>
+        <div class="livemap-wrap">
+          <div class="livemap-controls">
+            <div class="livemap-legend">
+              <span class="legend-dot critical"></span> Critical
+              <span class="legend-dot high"></span> High
+              <span class="legend-dot medium"></span> Medium
+              <span class="legend-dot low"></span> Low
+            </div>
+            <div class="livemap-filters">
+              <button class="map-filter-btn active" onclick="filterMapMarkers('all',this)">All</button>
+              <button class="map-filter-btn" onclick="filterMapMarkers('pending',this)">Pending</button>
+              <button class="map-filter-btn" onclick="filterMapMarkers('in-progress',this)">In Progress</button>
+              <button class="map-filter-btn" onclick="filterMapMarkers('resolved',this)">Resolved</button>
+            </div>
+            <button class="btn-gps map-gps-btn" onclick="centerMapOnMe()"><i class="fas fa-crosshairs"></i> My Location</button>
+          </div>
+          <div id="liveMapContainer" class="livemap-container"></div>
+          <div class="livemap-stats">
+            <div class="lms-card"><i class="fas fa-circle-dot red-icon"></i><span id="lmsTotal">0</span> Total Incidents</div>
+            <div class="lms-card"><i class="fas fa-hourglass-half yellow-icon"></i><span id="lmsPending">0</span> Pending</div>
+            <div class="lms-card"><i class="fas fa-spinner green-icon"></i><span id="lmsInProg">0</span> In Progress</div>
+            <div class="lms-card"><i class="fas fa-circle-check blue-icon"></i><span id="lmsResolved">0</span> Resolved</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── MY REPORTS ── -->
+      <section class="page" id="page-myreports">
+        <div class="page-header">
+          <h1><i class="fas fa-list-check"></i> My Reports</h1>
+          <p class="page-sub">Track the status of all your submitted incidents</p>
+        </div>
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterReports('all',this)">All</button>
+          <button class="filter-btn" onclick="filterReports('pending',this)">Pending</button>
+          <button class="filter-btn" onclick="filterReports('in-progress',this)">In Progress</button>
+          <button class="filter-btn" onclick="filterReports('resolved',this)">Resolved</button>
+        </div>
+        <div class="reports-table-wrap">
+          <table class="reports-table">
+            <thead><tr><th>#</th><th>Type</th><th>Location</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="reportsTableBody">
+              <tr id="noReportsRow"><td colspan="6" class="empty-table-msg"><i class="fas fa-inbox"></i> No reports yet. Go to <strong>Report Incident</strong> to submit your first one!</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <section class="page" id="page-notifications">
+        <div class="page-header notif-page-header">
+          <div>
+            <h1><i class="fas fa-bell"></i> Notifications</h1>
+            <p class="page-sub">Stay updated with your report status and barangay announcements</p>
+          </div>
+          <button class="btn-clear-all" id="clearAllNotifBtn" onclick="clearAllNotifications()" title="Clear all notifications">
+            <i class="fas fa-trash-can"></i> Clear All
+          </button>
+        </div>
+        <div class="notif-list" id="notifList">
+          <div class="empty-state" id="noNotifMsg"><i class="fas fa-bell-slash"></i><p>No notifications yet. They will appear here when your reports are updated.</p></div>
+        </div>
+      </section>
+
+      <!-- ── FEEDBACK ── -->
+      <section class="page" id="page-feedback">
+        <div class="page-header">
+          <h1><i class="fas fa-comment-dots"></i> Feedback</h1>
+          <p class="page-sub">Help us improve barangay services</p>
+        </div>
+        <div class="feedback-wrap">
+          <div class="form-section">
+            <div class="form-section-title">Rate Barangay Services</div>
+            <div class="rating-categories">
+              <div class="rating-row"><span>Response Speed</span><div class="stars" data-cat="speed"><i class="fas fa-star" onclick="rateStar(this,1,'speed')"></i><i class="fas fa-star" onclick="rateStar(this,2,'speed')"></i><i class="fas fa-star" onclick="rateStar(this,3,'speed')"></i><i class="fas fa-star" onclick="rateStar(this,4,'speed')"></i><i class="fas fa-star" onclick="rateStar(this,5,'speed')"></i></div></div>
+              <div class="rating-row"><span>Incident Resolution</span><div class="stars" data-cat="resolution"><i class="fas fa-star" onclick="rateStar(this,1,'resolution')"></i><i class="fas fa-star" onclick="rateStar(this,2,'resolution')"></i><i class="fas fa-star" onclick="rateStar(this,3,'resolution')"></i><i class="fas fa-star" onclick="rateStar(this,4,'resolution')"></i><i class="fas fa-star" onclick="rateStar(this,5,'resolution')"></i></div></div>
+              <div class="rating-row"><span>Portal Usability</span><div class="stars" data-cat="portal"><i class="fas fa-star" onclick="rateStar(this,1,'portal')"></i><i class="fas fa-star" onclick="rateStar(this,2,'portal')"></i><i class="fas fa-star" onclick="rateStar(this,3,'portal')"></i><i class="fas fa-star" onclick="rateStar(this,4,'portal')"></i><i class="fas fa-star" onclick="rateStar(this,5,'portal')"></i></div></div>
+              <div class="rating-row"><span>Communication</span><div class="stars" data-cat="comm"><i class="fas fa-star" onclick="rateStar(this,1,'comm')"></i><i class="fas fa-star" onclick="rateStar(this,2,'comm')"></i><i class="fas fa-star" onclick="rateStar(this,3,'comm')"></i><i class="fas fa-star" onclick="rateStar(this,4,'comm')"></i><i class="fas fa-star" onclick="rateStar(this,5,'comm')"></i></div></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Written Feedback</div>
+            <div class="form-group">
+              <label>Category</label>
+              <select class="form-input">
+                <option>General Feedback</option>
+                <option>Report on a Specific Incident</option>
+                <option>Suggestion / Improvement</option>
+                <option>Complaint</option>
+                <option>Compliment</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Your Message</label>
+              <textarea class="form-input" id="feedbackMsg" rows="5" placeholder="Share your experience, suggestions, or concerns with the barangay..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="submitFeedback()"><i class="fas fa-paper-plane"></i> Submit Feedback</button>
+            <div class="alert-box hidden" id="feedbackAlert"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ABOUT US ── -->
+      <section class="page" id="page-aboutus">
+        <div class="page-header">
+          <h1><i class="fas fa-building-columns"></i> About Barangay Sta. Rita</h1>
+          <p class="page-sub">Officials, contact information, and barangay profile</p>
+        </div>
+        <div class="about-wrap">
+          <div class="about-hero">
+            <img src="images.jpg" alt="Barangay Sta. Rita Seal" class="about-seal"/>
+            <div class="about-hero-info">
+              <div class="about-brgy-name">Barangay Sta. Rita</div>
+              <div class="about-brgy-city">Lungsod ng Olongapo, Zambales</div>
+              <div class="about-contact-chips">
+                <span class="about-chip"><i class="fas fa-phone"></i> +63 47 XXX XXXX</span>
+                <span class="about-chip"><i class="fas fa-envelope"></i> starita.brgy@olongapo.gov.ph</span>
+                <span class="about-chip"><i class="fas fa-location-dot"></i> Sta. Rita, Olongapo City</span>
+              </div>
+            </div>
+          </div>
+          <div class="about-officials-grid">
+            <div class="about-section-title"><i class="fas fa-users"></i> Barangay Officials</div>
+            <!-- Captain -->
+            <div class="official-card captain-card">
+              <div class="official-badge"><i class="fas fa-star"></i> Barangay Captain</div>
+              <div class="official-icon"><i class="fas fa-user-tie"></i></div>
+              <div class="official-name">Hon. Rowena V. Cerezo</div>
+              <div class="official-role">Punong Barangay</div>
+            </div>
+            <!-- Kagawads -->
+            <div class="about-section-title sub-title"><i class="fas fa-gavel"></i> Barangay Kagawad (Councilors)</div>
+            <div class="officials-row">
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Joshua A. Gardon</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Joselito T. Cruz, Jr.</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Rodman A. Barroga</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Jerry C. Nidoy</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Ronald B. Guevarra</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Raquel Y. Atienza</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Dolores D. Valdez</div>
+                <div class="official-role">Kagawad</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user"></i></div>
+                <div class="official-name">Kagawad Julius Quingquing Abejo</div>
+                <div class="official-role">Kagawad (Additional Staff)</div>
+              </div>
+            </div>
+            <!-- SK & Secretariat -->
+            <div class="about-section-title sub-title"><i class="fas fa-id-card-clip"></i> Secretariat & Youth</div>
+            <div class="officials-row">
+              <div class="official-card">
+                <div class="official-icon sm sk"><i class="fas fa-user"></i></div>
+                <div class="official-name">Hon. Precious Niña O. Delos Reyes</div>
+                <div class="official-role">SK Chairman</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm"><i class="fas fa-user-pen"></i></div>
+                <div class="official-name">Mr. Ryan Steve M. Escanlar</div>
+                <div class="official-role">Barangay Secretary</div>
+              </div>
+              <div class="official-card">
+                <div class="official-icon sm treasurer"><i class="fas fa-coins"></i></div>
+                <div class="official-name">Ms. Rowena C. Rufino</div>
+                <div class="official-role">Barangay Treasurer</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Section -->
+          <div class="about-contact-section">
+            <div class="about-section-title"><i class="fas fa-address-book"></i> Contact Information</div>
+            <div class="contact-cards-row">
+              <div class="contact-info-card">
+                <div class="contact-info-icon"><i class="fas fa-phone"></i></div>
+                <div class="contact-info-label">Hotline</div>
+                <div class="contact-info-value">+63 47 XXX XXXX</div>
+              </div>
+              <div class="contact-info-card">
+                <div class="contact-info-icon"><i class="fas fa-envelope"></i></div>
+                <div class="contact-info-label">Email</div>
+                <div class="contact-info-value">starita.brgy@olongapo.gov.ph</div>
+              </div>
+              <div class="contact-info-card">
+                <div class="contact-info-icon"><i class="fas fa-location-dot"></i></div>
+                <div class="contact-info-label">Address</div>
+                <div class="contact-info-value">Sta. Rita, Olongapo City, Zambales</div>
+              </div>
+              <div class="contact-info-card">
+                <div class="contact-info-icon"><i class="fas fa-clock"></i></div>
+                <div class="contact-info-label">Office Hours</div>
+                <div class="contact-info-value">Mon–Fri: 8:00 AM – 5:00 PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PROFILE ── -->
+      <section class="page" id="page-profile">
+        <div class="page-header">
+          <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+          <p class="page-sub">Manage your resident account information</p>
+        </div>
+        <div class="profile-wrap">
+          <div class="profile-card">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profileAvatar"></div>
+              <button class="avatar-edit"><i class="fas fa-camera"></i></button>
+            </div>
+            <div class="profile-name" id="profileName"></div>
+            <div class="profile-role">Verified Resident · Sta. Rita</div>
+            <div class="profile-stats">
+              <div><div class="ps-num" id="profStatTotal">0</div><div class="ps-label">Reports</div></div>
+              <div><div class="ps-num" id="profStatResolved">0</div><div class="ps-label">Resolved</div></div>
+              <div><div class="ps-num" id="profStatDays">1</div><div class="ps-label">Days Active</div></div>
+            </div>
+          </div>
+          <div class="profile-form-wrap">
+            <div class="form-section">
+              <div class="form-section-title">Personal Information</div>
+              <div class="form-row-2">
+                <div class="form-group"><label>First Name</label><input type="text" class="form-input" id="profFirst" value=""/></div>
+                <div class="form-group"><label>Last Name</label><input type="text" class="form-input" id="profLast" value=""/></div>
+              </div>
+              <div class="form-group"><label>Email</label><input type="email" class="form-input" id="profEmail" value=""/></div>
+              <div class="form-group"><label>Contact Number</label><input type="tel" class="form-input" id="profPhone" value=""/></div>
+              <div class="form-group"><label>Home Address</label><input type="text" class="form-input" id="profAddress" value="" placeholder="Street, Purok, Sta. Rita, Olongapo City"/></div>
+              <div class="form-group">
+                <label>Target Barangay</label>
+                <input type="text" class="form-input" id="profBarangay" value="Sta. Rita" readonly style="opacity:.7;cursor:not-allowed"/>
+                <div class="field-hint"><i class="fas fa-lock" style="font-size:.7rem"></i> Fixed to Barangay Sta. Rita</div>
+              </div>
+            </div>
+            <div class="form-section">
+              <div class="form-section-title">Change Password</div>
+              <div class="form-group"><label>Current Password</label><input type="password" class="form-input" placeholder="••••••••"/></div>
+              <div class="form-row-2">
+                <div class="form-group"><label>New Password</label><input type="password" class="form-input" placeholder="••••••••"/></div>
+                <div class="form-group"><label>Confirm New</label><input type="password" class="form-input" placeholder="••••••••"/></div>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveProfile()"><i class="fas fa-floppy-disk"></i> Save Changes</button>
+            <div class="alert-box hidden" id="profileAlert"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═ REPORT DETAIL MODAL ═ -->
+<div class="modal-overlay hidden" id="reportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Report #1043</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel-modal" onclick="closeModal()"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═ EMERGENCY MODAL ═ -->
+<div class="modal-overlay hidden" id="emergencyModal">
+  <div class="modal emergency-modal">
+    <div class="emergency-header">
+      <i class="fas fa-triangle-exclamation"></i>
+      <h3>EMERGENCY QUICK REPORT</h3>
+      <button class="modal-close" onclick="closeEmergency()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="emergency-body">
+      <div class="emergency-warning">⚠️ For life-threatening emergencies, call <strong>911</strong> first!</div>
+      <div class="emerg-btns">
+        <button class="emerg-type-btn" onclick="submitEmergency('Fire')"><i class="fas fa-fire"></i>Fire</button>
+        <button class="emerg-type-btn" onclick="submitEmergency('Flood')"><i class="fas fa-water"></i>Flood</button>
+        <button class="emerg-type-btn" onclick="submitEmergency('Medical')"><i class="fas fa-kit-medical"></i>Medical</button>
+        <button class="emerg-type-btn" onclick="submitEmergency('Crime')"><i class="fas fa-user-shield"></i>Crime</button>
+        <button class="emerg-type-btn" onclick="submitEmergency('Accident')"><i class="fas fa-car-burst"></i>Accident</button>
+        <button class="emerg-type-btn" onclick="submitEmergency('Other')"><i class="fas fa-circle-exclamation"></i>Other</button>
+      </div>
+      <div class="form-group"><label>Additional Info</label><textarea class="form-input" id="emergDesc" rows="3" placeholder="Describe the emergency and your exact location..."></textarea></div>
+      <button class="btn-emergency" onclick="sendEmergency()"><i class="fas fa-bolt"></i> SEND EMERGENCY ALERT</button>
+      <button class="btn-cancel-modal" onclick="closeEmergency()"><i class="fas fa-times"></i> Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═ TERMS MODAL ═ -->
+<div class="modal-overlay hidden" id="termsModal">
+  <div class="modal terms-modal-body">
+    <div class="modal-header">
+      <h3><i class="fas fa-file-contract"></i> Terms &amp; Conditions — SmartBarangay</h3>
+      <button class="modal-close" onclick="closeTermsModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="terms-modal-scroll">
+      <div class="terms-section"><div class="terms-section-num">1</div><div><strong>Purpose &amp; Scope</strong><p>The SmartBarangay Resident Portal is an official digital platform provided by Barangay Sta. Rita, Olongapo City to facilitate AI-assisted incident reporting, real-time community communication, and transparent public safety management. By registering, you agree to use this platform solely for lawful, community-beneficial purposes.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">2</div><div><strong>Data Privacy</strong><p>All personal information collected is governed by the <em>Data Privacy Act of 2012 (Republic Act 10173)</em>. Your data is stored securely, never sold to third parties, and used only to process reports and improve barangay services.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">3</div><div><strong>Incident Reporting</strong><p>Residents must submit accurate, truthful reports. False reports, harassment, or malicious use of the AI incident system may result in account suspension and legal action under applicable Philippine law.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">4</div><div><strong>AI-Assisted Features</strong><p>The AI analysis tools are advisory in nature. Final decisions regarding incident response are made by authorized barangay officials.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">5</div><div><strong>Emergency Reporting</strong><p>The emergency quick-report feature is for genuine emergencies only. For life-threatening situations, always contact <strong>911</strong> or your local emergency services first.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">6</div><div><strong>Image Upload Policy</strong><p>Uploaded images must be relevant to the reported incident. Uploading obscene, defamatory, or misleading images is strictly prohibited under <em>RA 10175 (Cybercrime Prevention Act)</em>.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">7</div><div><strong>Account Security</strong><p>You are responsible for maintaining the confidentiality of your account credentials. Report unauthorized access to the barangay IT office immediately.</p></div></div>
+      <div class="terms-section"><div class="terms-section-num">8</div><div><strong>Changes to Terms</strong><p>The Barangay reserves the right to update these terms at any time. Continued use of the portal constitutes acceptance of the revised terms.</p></div></div>
+      <div class="terms-footer-note"><i class="fas fa-circle-info"></i> Last updated: April 2026 &nbsp;|&nbsp; Barangay Sta. Rita LGU Portal</div>
+    </div>
+    <div class="terms-modal-actions">
+      <button class="btn-outline" onclick="closeTermsModal()"><i class="fas fa-times"></i> Close</button>
+      <button class="btn-primary" onclick="agreeAndCloseTerms()"><i class="fas fa-check"></i> I Agree &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═ OTP VERIFICATION MODAL ═ -->
+<div class="modal-overlay hidden" id="otpModal">
+  <div class="modal otp-modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-shield-halved"></i> Email Verification</h3>
+    </div>
+    <div class="otp-modal-body">
+      <div class="otp-icon-wrap"><i class="fas fa-envelope-open-text"></i></div>
+      <p class="otp-desc">We sent a 6-digit verification code to<br><strong id="otpEmailDisplay"></strong></p>
+      <p class="otp-sub">Enter the code below to complete your registration.</p>
+      <div class="otp-inputs" id="otpInputs">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+      </div>
+      <div class="otp-timer" id="otpTimer"><i class="fas fa-clock"></i> Code expires in <span id="otpCountdown">05:00</span></div>
+      <div class="alert-box hidden" id="otpAlert"></div>
+      <button class="btn-primary" onclick="verifyOtp()"><i class="fas fa-shield-check"></i> Verify &amp; Create Account</button>
+      <div class="otp-resend">Didn&#39;t receive a code? <button class="otp-resend-btn" id="otpResendBtn" onclick="resendOtp()" disabled><i class="fas fa-rotate-right"></i> Resend Code</button></div>
+      <button class="btn-outline otp-cancel-btn" onclick="cancelOtp()"><i class="fas fa-times-circle"></i> Cancel OTP Sending</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS TOAST -->
+<div class="toast hidden" id="toast"><i class="fas fa-circle-check"></i><span id="toastMsg"></span></div>
+
+<script src="Resident.js"></script>
+</body>
+</html>
