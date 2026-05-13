@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/Resident", "dest": "/Resident.html" },
+    { "src": "/Resident.html", "dest": "/Resident.html" },
+    { "src": "/SmartBarangay_Staff", "dest": "/SmartBarangay_Staff.html" },
+    { "src": "/SmartBarangay_Staff.html", "dest": "/SmartBarangay_Staff.html" }
+  ]
+}
